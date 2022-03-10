@@ -60,3 +60,7 @@ harness = false
 [[bench]]
 name = "id_type_benchmark"
 harness = false
+
+[[bench]]
+name = "spaces_metrics"
+harness = false
