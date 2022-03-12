@@ -54,21 +54,21 @@ pub unsafe fn dot_similarity_avx512f(
     for i in (0..m).step_by(16) {
         sum512 = _mm512_fmadd_ps(_mm512_loadu_ps(&v1[i]), _mm512_loadu_ps(&v2[i]), sum512);
 
-/*
-        std::arch::asm!(
-            "vmovups zmm1, [rdi]",
-            "vmovups zmm2, [rdi + 64]",
-            "vmovups zmm3, [rdi + 128]",
-            "vmovups zmm4, [rdi + 192]",
-            "vfmadd132ps zmm1, zmm0, [rdx]",
-            "vfmadd231ps zmm1, zmm2, [rdx + 64]",
-            "vfmadd231ps zmm1, zmm3, [rdx + 128]",
-            "vmovaps zmm0, zmm1",
-            "vfmadd231ps zmm0, zmm4, [rdx + 192]",
-            "add rdi, 256",
-            "add rdx, 256",
-        );
-*/
+        /*
+                std::arch::asm!(
+                    "vmovups zmm1, [rdi]",
+                    "vmovups zmm2, [rdi + 64]",
+                    "vmovups zmm3, [rdi + 128]",
+                    "vmovups zmm4, [rdi + 192]",
+                    "vfmadd132ps zmm1, zmm0, [rdx]",
+                    "vfmadd231ps zmm1, zmm2, [rdx + 64]",
+                    "vfmadd231ps zmm1, zmm3, [rdx + 128]",
+                    "vmovaps zmm0, zmm1",
+                    "vfmadd231ps zmm0, zmm4, [rdx + 192]",
+                    "add rdi, 256",
+                    "add rdx, 256",
+                );
+        */
     }
     let mut res = _mm512_mask_reduce_add_ps(u16::MAX, sum512);
     for i in m..n {
