@@ -8,7 +8,7 @@ pub unsafe fn euclid_similarity_neon(
     v1: &[VectorElementType],
     v2: &[VectorElementType],
 ) -> ScoreType {
-    let mut result : f32 = 0.;
+    let mut result: f32 = 0.;
     let n = v1.len();
     let m = n - (n % 4);
     if m > 0 {
@@ -43,7 +43,7 @@ pub unsafe fn euclid_similarity_neon(
 }
 
 pub unsafe fn cosine_preprocess_neon(vector: &[VectorElementType]) -> Vec<VectorElementType> {
-    let mut length : f32 = 0.;
+    let mut length: f32 = 0.;
     let n = vector.len();
     let m = n - (n % 4);
     if m > 0 {
@@ -76,7 +76,7 @@ pub unsafe fn cosine_preprocess_neon(vector: &[VectorElementType]) -> Vec<Vector
 }
 
 pub unsafe fn dot_similarity_neon(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
-    let mut result : f32 = 0.;
+    let mut result: f32 = 0.;
     let n = v1.len();
     let m = n - (n % 4);
     if m > 0 {
@@ -134,7 +134,7 @@ mod tests {
                 1., 1., 1.,
             ];
             */
-            
+
             let euclid_simd = unsafe { euclid_similarity_neon(&v1, &v2) };
             let euclid = euclid_similarity(&v1, &v2);
             assert_eq!(euclid_simd, euclid);
