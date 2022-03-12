@@ -11,7 +11,7 @@ use super::simple_avx::*;
 #[cfg(all(target_arch = "x86_64", target_feature = "avx512f"))]
 use super::simple_avx512::*;
 
-#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+#[cfg(all(target_arch = "aarch64"))]
 use super::simple_neon::*;
 
 #[derive(Clone)]
@@ -50,9 +50,9 @@ impl Metric for EuclidMetric {
             }
         }
 
-        #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+        #[cfg(target_arch = "aarch64")]
         {
-            if std::arch::is_aarch64_feature_detected!("neon") {
+            if has_neon() {
                 return unsafe { euclid_similarity_neon(v1, v2) };
             }
         }
@@ -92,9 +92,9 @@ impl Metric for DotProductMetric {
             }
         }
 
-        #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+        #[cfg(target_arch = "aarch64")]
         {
-            if std::arch::is_aarch64_feature_detected!("neon") {
+            if has_neon() {
                 return unsafe { dot_similarity_neon(v1, v2) };
             }
         }
@@ -134,9 +134,9 @@ impl Metric for CosineMetric {
             }
         }
 
-        #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+        #[cfg(target_arch = "aarch64")]
         {
-            if std::arch::is_aarch64_feature_detected!("neon") {
+            if has_neon() {
                 return unsafe { dot_similarity_neon(v1, v2) };
             }
         }
@@ -166,9 +166,9 @@ impl Metric for CosineMetric {
             }
         }
 
-        #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+        #[cfg(target_arch = "aarch64")]
         {
-            if std::arch::is_aarch64_feature_detected!("neon") {
+            if has_neon() {
                 return Some(unsafe { cosine_preprocess_neon(vector) });
             }
         }
