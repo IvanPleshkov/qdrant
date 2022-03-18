@@ -149,7 +149,7 @@ impl GraphLayers {
     }
 
     /// Greedy search for closest points within a single graph layer
-    #[trace]
+    // #[trace]
     fn _search_on_level(
         &self,
         searcher: &mut SearchContext,
@@ -157,21 +157,51 @@ impl GraphLayers {
         visited_list: &mut VisitedList,
         points_scorer: &FilteredScorer,
     ) {
+        let limit = self.get_m(level);
+        let mut scores: Vec<ScoredPointOffset> = vec![
+            ScoredPointOffset{ idx: 0, score: 0. }; limit];
+        let mut points_indexes: Vec<PointOffsetType> = vec![];
         while let Some(candidate) = searcher.candidates.pop() {
             if candidate.score < searcher.lower_bound() {
                 break;
             }
-            let mut links_iter = self
-                .links(candidate.idx, level)
-                .iter()
-                .copied()
-                .filter(|point_id| !visited_list.check_and_update_visited(*point_id));
 
+            points_indexes.clear();
+            for link in self.links(candidate.idx, level) {
+                if !visited_list.check_and_update_visited(*link) {
+                    points_indexes.push(*link);
+                }
+            }
+
+            let count = points_scorer.raw_scorer.score_points_2(&points_indexes, &mut scores);
+
+            for i in 0..count {
+                searcher.process_candidate(scores[i]);
+            }
+
+            /*
+            let mut links_iter = {
+                let a = self
+                .links(candidate.idx, level)
+                .iter();
+
+                let b = a.copied();
+
+                b.filter(|point_id| {
+                    let _d = tracy_client::span!("lambda_1");
+                    !visited_list.check_and_update_visited(*point_id)
+                })
+            };
+
+            let _r = tracy_client::span!("gl_score_iterable_points");
             points_scorer.score_iterable_points(
                 &mut links_iter,
                 self.get_m(level),
-                |score_point| searcher.process_candidate(score_point),
+                |score_point| {
+                    searcher.process_candidate(score_point)
+                },
             );
+            */
         }
     }
 

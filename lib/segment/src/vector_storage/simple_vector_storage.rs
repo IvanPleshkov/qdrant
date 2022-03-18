@@ -69,6 +69,31 @@ where
     }
 
     #[trace]
+    fn score_points_2(
+        &self,
+        points: &[PointOffsetType],
+        scores: &mut [ScoredPointOffset],
+    ) -> usize {
+        let mut size: usize = 0;
+        for point in points {
+            if self.deleted[*point as usize] {
+                continue;
+            }
+            let other_vector = self.vectors.get(*point as usize).unwrap();
+            scores[size] = ScoredPointOffset {
+                idx: *point,
+                score: self.metric.similarity(&self.query, other_vector),
+            };
+
+            size += 1;
+            if size == scores.len() {
+                return size;
+            }
+        }
+        size
+    }
+
+    #[trace]
     fn check_point(&self, point: PointOffsetType) -> bool {
         (point < self.vectors.len() as PointOffsetType) && !self.deleted[point as usize]
     }

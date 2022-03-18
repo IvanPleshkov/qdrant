@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 #[cfg(feature = "web")]
 mod actix;
 pub mod common;
@@ -12,11 +15,9 @@ use consensus::Consensus;
 use slog::Drain;
 use tracy_client::*;
 
-/*
 #[global_allocator]
 static GLOBAL: ProfiledAllocator<std::alloc::System> =
     ProfiledAllocator::new(std::alloc::System, 100);
-*/
 
 use rand::{thread_rng, Rng};
 use segment::fixtures::index_fixtures::{
@@ -27,14 +28,15 @@ use segment::index::hnsw_index::point_scorer::FilteredScorer;
 use segment::spaces::simple::CosineMetric;
 use segment::types::PointOffsetType;
 
-const NUM_VECTORS: usize = 5_000;
-const DIM: usize = 32;
+const NUM_VECTORS: usize = 250;
+const DIM: usize = 1024;
 const M: usize = 16;
 const TOP: usize = 10;
 const EF_CONSTRUCT: usize = 64;
 const EF: usize = 64;
 const USE_HEURISTIC: bool = true;
 
+#[trace]
 fn build_index(num_vectors: usize) -> (TestRawScorerProducer<CosineMetric>, GraphLayers) {
     let mut rng = thread_rng();
 
