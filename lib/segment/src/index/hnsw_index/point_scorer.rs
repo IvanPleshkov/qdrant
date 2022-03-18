@@ -43,23 +43,23 @@ impl<'a> FilteredScorer<'a> {
         action: F,
     ) where
         F: FnMut(ScoredPointOffset),
-        {
-            match self.filter {
-                None => self
-                    .raw_scorer
-                    .score_points(points_iterator)
+    {
+        match self.filter {
+            None => self
+                .raw_scorer
+                .score_points(points_iterator)
+                .take(limit)
+                .for_each(action),
+            Some(f) => {
+                let mut points_filtered_iterator =
+                    points_iterator.filter(move |id| self.condition_checker.check(*id, f));
+                self.raw_scorer
+                    .score_points(&mut points_filtered_iterator)
                     .take(limit)
-                    .for_each(action),
-                Some(f) => {
-                    let mut points_filtered_iterator =
-                        points_iterator.filter(move |id| self.condition_checker.check(*id, f));
-                    self.raw_scorer
-                        .score_points(&mut points_filtered_iterator)
-                        .take(limit)
-                        .for_each(action);
-                }
-            };
-        }
+                    .for_each(action);
+            }
+        };
+    }
 
     #[trace]
     pub fn score_points<F>(&self, ids: &[PointOffsetType], limit: usize, action: F)

@@ -158,8 +158,8 @@ impl GraphLayers {
         points_scorer: &FilteredScorer,
     ) {
         let limit = self.get_m(level);
-        let mut scores: Vec<ScoredPointOffset> = vec![
-            ScoredPointOffset{ idx: 0, score: 0. }; limit];
+        let mut scores: Vec<ScoredPointOffset> =
+            vec![ScoredPointOffset { idx: 0, score: 0. }; limit];
         let mut points_indexes: Vec<PointOffsetType> = vec![];
         while let Some(candidate) = searcher.candidates.pop() {
             if candidate.score < searcher.lower_bound() {
@@ -173,7 +173,9 @@ impl GraphLayers {
                 }
             }
 
-            let count = points_scorer.raw_scorer.score_points_2(&points_indexes, &mut scores);
+            let count = points_scorer
+                .raw_scorer
+                .score_points_2(&points_indexes, &mut scores);
 
             for i in 0..count {
                 searcher.process_candidate(scores[i]);
