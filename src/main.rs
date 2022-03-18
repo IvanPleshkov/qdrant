@@ -88,8 +88,7 @@ fn main() -> std::io::Result<()> {
         let raw_scorer = vector_holder.get_raw_scorer(query);
         let scorer = FilteredScorer::new(&raw_scorer, &fake_condition_checker, None);
 
-        let mut points_to_score =
-            (0..1500).map(|_| rng.gen_range(0..(NUM_VECTORS * 10)) as u32);
+        let mut points_to_score = (0..1500).map(|_| rng.gen_range(0..(NUM_VECTORS * 10)) as u32);
         scorer.score_iterable_points(&mut points_to_score, 1000, |_| {})
     }
 
