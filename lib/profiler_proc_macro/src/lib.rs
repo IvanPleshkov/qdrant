@@ -1,8 +1,9 @@
 extern crate proc_macro;
 
-use ::syn::{parse_macro_input, ItemFn};
+//use ::syn::{parse_macro_input, ItemFn};
 use proc_macro::TokenStream;
 
+/*
 #[proc_macro_attribute]
 // #[cfg(feature = "profiling_enabled")]
 pub fn trace(_: TokenStream, input: TokenStream) -> TokenStream {
@@ -20,11 +21,11 @@ pub fn trace(_: TokenStream, input: TokenStream) -> TokenStream {
 
     result
 }
+*/
 
-/*
+
 #[proc_macro_attribute]
 #[cfg(not(feature = "profiling_enabled"))]
 pub fn trace(_: TokenStream, input: TokenStream) -> TokenStream {
     input
 }
-*/
