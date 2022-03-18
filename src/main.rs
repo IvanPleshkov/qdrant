@@ -15,9 +15,11 @@ use consensus::Consensus;
 use slog::Drain;
 use tracy_client::*;
 
+/*
 #[global_allocator]
 static GLOBAL: ProfiledAllocator<std::alloc::System> =
     ProfiledAllocator::new(std::alloc::System, 100);
+*/
 
 use rand::{thread_rng, Rng};
 use segment::fixtures::index_fixtures::{
@@ -28,8 +30,10 @@ use segment::index::hnsw_index::point_scorer::FilteredScorer;
 use segment::spaces::simple::CosineMetric;
 use segment::types::PointOffsetType;
 
-const NUM_VECTORS: usize = 250;
-const DIM: usize = 1024;
+use std::time::{Duration, Instant};
+
+const NUM_VECTORS: usize = 50000;
+const DIM: usize = 32;
 const M: usize = 16;
 const TOP: usize = 10;
 const EF_CONSTRUCT: usize = 64;
@@ -54,6 +58,7 @@ fn build_index(num_vectors: usize) -> (TestRawScorerProducer<CosineMetric>, Grap
 }
 
 fn main() -> std::io::Result<()> {
+    let start = Instant::now();
     let mut rng = thread_rng();
 
     let (vector_holder, graph_layers) = build_index(NUM_VECTORS);
@@ -101,6 +106,9 @@ fn main() -> std::io::Result<()> {
         let scorer = FilteredScorer::new(&raw_scorer, &fake_condition_checker, None);
         graph_layers.search(TOP, EF, &scorer);
     }
+
+    let duration = start.elapsed();
+    println!("Time elapsed is: {:?}", duration);
 
     Ok(())
 }
