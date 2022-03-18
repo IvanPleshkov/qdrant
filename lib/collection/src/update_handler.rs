@@ -9,7 +9,7 @@ use crate::operations::types::{CollectionError, CollectionResult};
 use crate::operations::CollectionUpdateOperations;
 use crate::wal::SerdeWal;
 use itertools::Itertools;
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info, warn};
 use segment::entry::entry_point::OperationResult;
 use segment::types::SeqNumberType;
 use std::cmp::min;
@@ -364,7 +364,7 @@ impl UpdateHandler {
                 }
             };
 
-            trace!("Attempting flushing");
+            info!("Attempting flushing");
             let confirmed_version = Self::flush_segments(segments.clone());
             let confirmed_version = match confirmed_version {
                 Ok(version) => version,
