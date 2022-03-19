@@ -1,6 +1,6 @@
 extern crate proc_macro;
 
-use ::syn::{parse_macro_input, ItemFn};
+//use ::syn::{parse_macro_input, ItemFn};
 use proc_macro::TokenStream;
 
 /*
