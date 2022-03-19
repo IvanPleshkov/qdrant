@@ -149,7 +149,7 @@ impl GraphLayers {
     }
 
     /// Greedy search for closest points within a single graph layer
-    // #[trace]
+    #[trace]
     fn _search_on_level(
         &self,
         searcher: &mut SearchContext,
@@ -160,7 +160,9 @@ impl GraphLayers {
         let limit = self.get_m(level);
         let mut scores: Vec<ScoredPointOffset> =
             vec![ScoredPointOffset { idx: 0, score: 0. }; limit];
-        let mut points_indexes: Vec<PointOffsetType> = vec![];
+        let mut points_indexes: Vec<PointOffsetType> = Vec::new();
+        points_indexes.reserve(2 * limit);
+
         while let Some(candidate) = searcher.candidates.pop() {
             if candidate.score < searcher.lower_bound() {
                 break;
@@ -177,8 +179,8 @@ impl GraphLayers {
                 .raw_scorer
                 .score_points_2(&points_indexes, &mut scores);
 
-            for i in 0..count {
-                searcher.process_candidate(scores[i]);
+            for candidate in scores.iter().take(count) {
+                searcher.process_candidate(*candidate);
             }
 
             /*

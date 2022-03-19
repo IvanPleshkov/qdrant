@@ -49,7 +49,7 @@ where
         Box::new(res_iter)
     }
 
-    #[trace]
+    // #[trace]
     fn score_points_2(
         &self,
         points: &[PointOffsetType],
