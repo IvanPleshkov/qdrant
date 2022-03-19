@@ -28,7 +28,7 @@ const DB_CACHE_SIZE: usize = 10 * 1024 * 1024; // 10 mb
 pub struct SimpleVectorStorage<TMetric: Metric> {
     dim: usize,
     metric: TMetric,
-    vectors: Vec<Vec<VectorElementType>>,
+    vectors: Vec<VectorElementType>,
     deleted: BitVec,
     deleted_count: usize,
     store: DB,
@@ -41,9 +41,10 @@ struct StoredRecord {
 }
 
 pub struct SimpleRawScorer<'a, TMetric: Metric> {
+    pub dim: usize,
     pub query: Vec<VectorElementType>,
     pub metric: &'a TMetric,
-    pub vectors: &'a Vec<Vec<VectorElementType>>,
+    pub vectors: &'a Vec<VectorElementType>,
     pub deleted: &'a BitVec,
 }
 
@@ -59,7 +60,8 @@ where
         let res_iter = points
             .filter(move |point| !self.deleted[*point as usize])
             .map(move |point| {
-                let other_vector = self.vectors.get(point as usize).unwrap();
+                let idx = (point as usize) * self.dim;
+                let other_vector = &self.vectors[idx..idx + self.dim];
                 ScoredPointOffset {
                     idx: point,
                     score: self.metric.similarity(&self.query, other_vector),
@@ -79,7 +81,8 @@ where
             if self.deleted[*point as usize] {
                 continue;
             }
-            let other_vector = self.vectors.get(*point as usize).unwrap();
+            let idx = (*point as usize) * self.dim;
+            let other_vector = &self.vectors[idx..idx + self.dim];
             scores[size] = ScoredPointOffset {
                 idx: *point,
                 score: self.metric.similarity(&self.query, other_vector),
@@ -95,19 +98,22 @@ where
 
     #[trace]
     fn check_point(&self, point: PointOffsetType) -> bool {
-        (point < self.vectors.len() as PointOffsetType) && !self.deleted[point as usize]
+        (point as usize * self.dim < self.vectors.len()) && !self.deleted[point as usize]
     }
 
     #[trace]
     fn score_point(&self, point: PointOffsetType) -> ScoreType {
-        let other_vector = &self.vectors[point as usize];
+        let idx = (point as usize) * self.dim;
+        let other_vector = &self.vectors[idx..idx + self.dim];
         self.metric.similarity(&self.query, other_vector)
     }
 
     #[trace]
     fn score_internal(&self, point_a: PointOffsetType, point_b: PointOffsetType) -> ScoreType {
-        let vector_a = &self.vectors[point_a as usize];
-        let vector_b = &self.vectors[point_b as usize];
+        let idx = (point_a as usize) * self.dim;
+        let vector_a = &self.vectors[idx..idx + self.dim];
+        let idx = (point_b as usize) * self.dim;
+        let vector_b = &self.vectors[idx..idx + self.dim];
         self.metric.similarity(vector_a, vector_b)
     }
 }
@@ -118,7 +124,7 @@ pub fn open_simple_vector_storage(
     dim: usize,
     distance: Distance,
 ) -> OperationResult<Arc<AtomicRefCell<VectorStorageSS>>> {
-    let mut vectors: Vec<Vec<VectorElementType>> = vec![];
+    let mut vectors: Vec<VectorElementType> = vec![];
     let mut deleted = BitVec::new();
     let mut deleted_count = 0;
 
@@ -135,21 +141,22 @@ pub fn open_simple_vector_storage(
             deleted_count += 1;
         }
 
-        if vectors.len() <= (point_id as usize) {
-            vectors.resize((point_id + 1) as usize, vec![0 as f32; dim]);
+        if vectors.len() <= (point_id as usize) * dim {
+            vectors.resize((point_id + 1) as usize * dim, 0.0);
         }
         while deleted.len() <= (point_id as usize) {
             deleted.push(false);
         }
 
         deleted.set(point_id as usize, stored_record.deleted);
-        vectors[point_id as usize] = stored_record.vector;
+        let idx = (point_id as usize) * dim;
+        vectors[idx..idx + dim].clone_from_slice(stored_record.vector.as_slice());
     }
 
-    debug!("Segment vectors: {}", vectors.len());
+    debug!("Segment vectors: {}", vectors.len() / dim);
     debug!(
         "Estimated segment size {} MB",
-        vectors.len() * dim * size_of::<VectorElementType>() / 1024 / 1024
+        vectors.len() * size_of::<VectorElementType>() / 1024 / 1024
     );
 
     match distance {
@@ -186,7 +193,8 @@ where
 {
     #[trace]
     fn update_stored(&self, point_id: PointOffsetType) -> OperationResult<()> {
-        let v = self.vectors.get(point_id as usize).unwrap();
+        let idx = (point_id as usize) * self.dim;
+        let v = &self.vectors[idx..idx + self.dim];
 
         let record = StoredRecord {
             deleted: self.deleted[point_id as usize],
@@ -210,7 +218,7 @@ where
     }
 
     fn vector_count(&self) -> usize {
-        self.vectors.len() - self.deleted_count
+        self.vectors.len() / self.dim - self.deleted_count
     }
 
     fn deleted_count(&self) -> usize {
@@ -218,7 +226,7 @@ where
     }
 
     fn total_vector_count(&self) -> usize {
-        self.vectors.len()
+        self.vectors.len() / self.dim
     }
 
     #[trace]
@@ -226,16 +234,16 @@ where
         if self.deleted.get(key as usize).unwrap_or(true) {
             return None;
         }
-        let vec = self.vectors.get(key as usize)?.clone();
-        Some(vec.to_vec())
+        let idx = (key as usize) * self.dim;
+        Some(self.vectors[idx..idx + self.dim].to_vec())
     }
 
     #[trace]
     fn put_vector(&mut self, vector: Vec<VectorElementType>) -> OperationResult<PointOffsetType> {
         assert_eq!(self.dim, vector.len());
-        self.vectors.push(vector);
+        self.vectors.extend_from_slice(vector.as_slice());
         self.deleted.push(false);
-        let new_id = (self.vectors.len() - 1) as PointOffsetType;
+        let new_id = ((self.vectors.len() - 1) / self.dim) as PointOffsetType;
         self.update_stored(new_id)?;
         Ok(new_id)
     }
@@ -246,23 +254,24 @@ where
         key: PointOffsetType,
         vector: Vec<VectorElementType>,
     ) -> OperationResult<PointOffsetType> {
-        self.vectors[key as usize] = vector;
+        let idx = (key as usize) * self.dim;
+        self.vectors[idx..idx + self.dim].clone_from_slice(vector.as_slice());
         self.update_stored(key)?;
         Ok(key)
     }
 
     #[trace]
     fn update_from(&mut self, other: &VectorStorageSS) -> OperationResult<Range<PointOffsetType>> {
-        let start_index = self.vectors.len() as PointOffsetType;
+        let start_index = (self.vectors.len() / self.dim) as PointOffsetType;
         for id in other.iter_ids() {
             let other_vector = other.get_vector(id).unwrap();
             // Do not perform preprocessing - vectors should be already processed
             self.deleted.push(false);
-            self.vectors.push(other_vector);
-            let new_id = (self.vectors.len() - 1) as PointOffsetType;
+            self.vectors.extend_from_slice(other_vector.as_slice());
+            let new_id = ((self.vectors.len() - 1) / self.dim) as PointOffsetType;
             self.update_stored(new_id)?;
         }
-        let end_index = self.vectors.len() as PointOffsetType;
+        let end_index = (self.vectors.len() / self.dim) as PointOffsetType;
         Ok(start_index..end_index)
     }
 
@@ -287,7 +296,8 @@ where
     #[trace]
     fn iter_ids(&self) -> Box<dyn Iterator<Item = PointOffsetType> + '_> {
         let iter = (0..self.vectors.len() as PointOffsetType)
-            .filter(move |id| !self.deleted[*id as usize]);
+            .step_by(self.dim)
+            .filter(move |id| !self.deleted[*id as usize]); // ???? move whole deleted ???
         Box::new(iter)
     }
 
@@ -299,6 +309,7 @@ where
     #[trace]
     fn raw_scorer(&self, vector: Vec<VectorElementType>) -> Box<dyn RawScorer + '_> {
         Box::new(SimpleRawScorer {
+            dim: self.dim,
             query: self.metric.preprocess(&vector).unwrap_or(vector),
             metric: &self.metric,
             vectors: &self.vectors,
@@ -308,8 +319,10 @@ where
 
     #[trace]
     fn raw_scorer_internal(&self, point_id: PointOffsetType) -> Box<dyn RawScorer + '_> {
+        let idx = (point_id as usize) * self.dim;
         Box::new(SimpleRawScorer {
-            query: self.vectors[point_id as usize].clone(),
+            dim: self.dim,
+            query: self.vectors[idx..idx + self.dim].to_vec(),
             metric: &self.metric,
             vectors: &self.vectors,
             deleted: &self.deleted,
@@ -330,7 +343,8 @@ where
         let scores = points
             .filter(|point| !self.deleted[*point as usize])
             .map(|point| {
-                let other_vector = self.vectors.get(point as usize).unwrap();
+                let idx = (point as usize) * self.dim;
+                let other_vector = &self.vectors[idx..idx + self.dim];
                 ScoredPointOffset {
                     idx: point,
                     score: self.metric.similarity(&preprocessed_vector, other_vector),
@@ -341,6 +355,8 @@ where
 
     #[trace]
     fn score_all(&self, vector: &[VectorElementType], top: usize) -> Vec<ScoredPointOffset> {
+        panic!("not now");
+        /*
         let preprocessed_vector = self
             .metric
             .preprocess(vector)
@@ -355,6 +371,7 @@ where
                 score: self.metric.similarity(&preprocessed_vector, other_vector),
             });
         peek_top_scores_iterable(scores, top)
+        */
     }
 
     #[trace]
