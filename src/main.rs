@@ -13,11 +13,13 @@ mod tonic;
 use consensus::Consensus;
 #[cfg(feature = "consensus")]
 use slog::Drain;
-use tracy_client::*;
 
+/*
+use tracy_client::*;
 #[global_allocator]
 static GLOBAL: ProfiledAllocator<std::alloc::System> =
     ProfiledAllocator::new(std::alloc::System, 100);
+*/
 
 use rand::{thread_rng, Rng};
 use segment::fixtures::index_fixtures::{
