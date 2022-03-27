@@ -18,7 +18,7 @@ impl SearchContext {
     pub fn new(entry_point: ScoredPointOffset, ef: usize) -> Self {
         let mut nearest = FixedLengthPriorityQueue::new(ef);
         nearest.push(entry_point);
-        println!("CAND ADD {} with score {}", entry_point.idx, entry_point.score); //ivandebug
+        // println!("CAND ADD {} with score {}", entry_point.idx, entry_point.score); //ivandebug
         SearchContext {
             nearest,
             candidates: BinaryHeap::from_iter([Reverse(entry_point)]),
@@ -40,7 +40,7 @@ impl SearchContext {
             Some(removed) => removed.idx != score_point.idx,
         };
         if was_added {
-            println!("CAND ADD {} with score {}", score_point.idx, score_point.score); //ivandebug
+            // println!("CAND ADD {} with score {}", score_point.idx, score_point.score); //ivandebug
             self.candidates.push(Reverse(score_point));
         }
     }

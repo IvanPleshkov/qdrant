@@ -85,11 +85,11 @@ fn main() -> std::io::Result<()> {
         let level = point_levels[idx];
         // println!("Random level {} vs actual {}", rlevel, level);
 
-        println!("");
-        println!("Insert point {}", idx);
+        //println!("");
+        //println!("Insert point {}", idx);
         graph_layers.link_new_point(idx as PointOffsetType, level, &scorer);
     }
-    graph_layers.dump();
+    //graph_layers.dump();
 
     let duration = start.elapsed();
     println!("Time elapsed is: {:?}", duration);

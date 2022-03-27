@@ -57,15 +57,15 @@ impl GraphLayers {
             }
         }
 
-        println!("connections = {{"); //ivandebug
-        for level_connections in connections {
-            println!("{{"); //ivandebug
-            for connection in level_connections {
-                println!("{{ {}, {} }},", connection.0, connection.1); //ivandebug
-            }
-            println!("}},"); //ivandebug
-        }
-        println!("}}"); //ivandebug
+        //println!("connections = {{"); //ivandebug
+        //for level_connections in connections {
+            //println!("{{"); //ivandebug
+            //for connection in level_connections {
+                //println!("{{ {}, {} }},", connection.0, connection.1); //ivandebug
+            //}
+            //println!("}},"); //ivandebug
+        //}
+        //println!("}}"); //ivandebug
     }
 
     pub fn new_with_params(
@@ -177,10 +177,10 @@ impl GraphLayers {
             let candidate = candidate.0;
             // if ((-curr_el_pair.first) > lowerBound && top_candidates.size() == ef_construction_) {
             if candidate.score > searcher.lower_bound() {
-                println!("CAND {} BREAK {} > {}", candidate.idx, candidate.score, searcher.lower_bound()); //ivandebug
+                //println!("CAND {} BREAK {} > {}", candidate.idx, candidate.score, searcher.lower_bound()); //ivandebug
                 break;
             }
-            println!("CAND {} with score {} and limit {}", candidate.idx, candidate.score, searcher.lower_bound()); //ivandebug
+            //println!("CAND {} with score {} and limit {}", candidate.idx, candidate.score, searcher.lower_bound()); //ivandebug
             let mut links_iter = self
                 .links(candidate.idx, level)
                 .iter()
@@ -236,7 +236,7 @@ impl GraphLayers {
             score: points_scorer.score_point(entry_point),
         };
         for level in rev_range(top_level, target_level) {
-            println!("EP LEVEL {}: curobj = {}, curdist = {}", level, current_point.idx, current_point.score); //ivandebug
+            //println!("EP LEVEL {}: curobj = {}, curdist = {}", level, current_point.idx, current_point.score); //ivandebug
 
             let mut changed = true;
             while changed {
@@ -247,7 +247,7 @@ impl GraphLayers {
                         changed = true;
                         current_point = score_point;
 
-                        println!("EP CHANGE: curobj = {}, curdist = {}", current_point.idx, current_point.score); //ivandebug
+                        //println!("EP CHANGE: curobj = {}, curdist = {}", current_point.idx, current_point.score); //ivandebug
 
                     }
                 });
@@ -299,13 +299,13 @@ impl GraphLayers {
         if candidates_count < m {
             return candidates.map(|x| x.idx).collect();
         }
-        println!(""); //ivandebug
+        //println!(""); //ivandebug
 
         let mut result_list = vec![];
         result_list.reserve(m);
         for current_closest in candidates {
             if result_list.len() >= m {
-                println!("HEURISTIC STOP"); //ivandebug
+                //println!("HEURISTIC STOP"); //ivandebug
                 break;
             }
             let mut is_good = true;
@@ -317,19 +317,19 @@ impl GraphLayers {
                 }
             }
             if is_good {
-                println!("HEURISTIC PASS {}", current_closest.idx); //ivandebug
+                //println!("HEURISTIC PASS {}", current_closest.idx); //ivandebug
                 result_list.push(current_closest.idx);
             } else {
-                println!("HEURISTIC SKIP {}", current_closest.idx); //ivandebug
+                //println!("HEURISTIC SKIP {}", current_closest.idx); //ivandebug
             }
         }
         result_list.reverse();
 
-        if !result_list.is_empty() {
-            for point in result_list.iter().copied() {
-                println!("HEURISTIC {}", point); //ivandebug
-            }
-        }
+        //if !result_list.is_empty() {
+        //    for point in result_list.iter().copied() {
+        //        println!("HEURISTIC {}", point); //ivandebug
+        //    }
+        //}
 
         result_list
     }
@@ -394,7 +394,7 @@ impl GraphLayers {
                 let scorer = |a, b| points_scorer.score_internal(a, b);
 
                 for curr_level in (0..=linking_level).rev() {
-                    println!("INSERT LEVEL {} WITH EP {}", curr_level, level_entry.idx); //ivandebug
+                    // println!("INSERT LEVEL {} WITH EP {}", curr_level, level_entry.idx); //ivandebug
 
                     let level_m = self.get_m(curr_level);
                     let existing_links = &self.links_layers[point_id as usize][curr_level];
@@ -406,12 +406,12 @@ impl GraphLayers {
                         points_scorer,
                         existing_links,
                     );
-                    let mut nearest_clone = nearest_points.clone();
-                    while !nearest_clone.is_empty() {
-                        let nearest_point = nearest_clone.top().unwrap().clone();
-                        println!("NEAREST {}, score {}", nearest_point.idx, nearest_point.score); //ivandebug
-                        nearest_clone.pop();
-                    }
+                    //let mut nearest_clone = nearest_points.clone();
+                    //while !nearest_clone.is_empty() {
+                        //let nearest_point = nearest_clone.top().unwrap().clone();
+                        //println!("NEAREST {}, score {}", nearest_point.idx, nearest_point.score); //ivandebug
+                        //nearest_clone.pop();
+                    //}
 
                     if self.use_heuristic {
                         let selected_nearest =

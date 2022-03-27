@@ -12,7 +12,7 @@ use segment::spaces::metric::Metric;
 use segment::spaces::simple::CosineMetric;
 use segment::types::{Distance, PointOffsetType, ScoreType, VectorElementType};
 
-const NUM_VECTORS: usize = 5_000;
+const NUM_VECTORS: usize = 100_000;
 const DIM: usize = 16;
 const M: usize = 16;
 const TOP: usize = 10;
