@@ -2,7 +2,6 @@ use crate::spaces::metric::Metric;
 use crate::spaces::simple::{CosineMetric, DotProductMetric, EuclidMetric};
 use crate::types::Distance;
 use serde::{Deserialize, Serialize};
-use std::cmp::Reverse;
 use std::collections::binary_heap::Iter as BinaryHeapIter;
 use std::collections::BinaryHeap;
 use std::iter::Rev;
@@ -11,7 +10,7 @@ use std::vec::IntoIter as VecIntoIter;
 /// This is a MinHeap by default - it will keep the largest elements, pop smallest
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct FixedLengthPriorityQueue<T: Ord> {
-    heap: BinaryHeap<Reverse<T>>,
+    heap: BinaryHeap<T>,
     length: usize,
 }
 
@@ -26,14 +25,14 @@ impl<T: Ord> FixedLengthPriorityQueue<T> {
 
     pub fn push(&mut self, value: T) -> Option<T> {
         if self.heap.len() < self.length {
-            self.heap.push(Reverse(value));
+            self.heap.push(value);
             return None;
         }
 
         match self.heap.peek() {
-            Some(Reverse(x)) if x < &value => {
-                self.heap.push(Reverse(value));
-                self.heap.pop().map(|Reverse(x)| x)
+            Some(x) if x < &value => {
+                self.heap.push(value);
+                self.heap.pop().map(|x| x)
             }
             _ => Some(value),
         }
@@ -43,7 +42,7 @@ impl<T: Ord> FixedLengthPriorityQueue<T> {
         self.heap
             .into_sorted_vec()
             .into_iter()
-            .map(|Reverse(x)| x)
+            .map(|x| x)
             .collect()
     }
 
@@ -54,7 +53,11 @@ impl<T: Ord> FixedLengthPriorityQueue<T> {
     }
 
     pub fn top(&self) -> Option<&T> {
-        self.heap.peek().map(|x| &x.0)
+        self.heap.peek()
+    }
+
+    pub fn pop(&mut self) {
+        self.heap.pop();
     }
 
     /// Returns actual length of the queue
@@ -69,18 +72,18 @@ impl<T: Ord> FixedLengthPriorityQueue<T> {
 }
 
 pub struct Iter<'a, T> {
-    it: Rev<BinaryHeapIter<'a, Reverse<T>>>,
+    it: Rev<BinaryHeapIter<'a, T>>,
 }
 
 pub struct IntoIter<T> {
-    it: VecIntoIter<Reverse<T>>,
+    it: VecIntoIter<T>,
 }
 
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.it.next().map(|Reverse(x)| x)
+        self.it.next().map(|x| x)
     }
 }
 
@@ -88,7 +91,7 @@ impl<T> Iterator for IntoIter<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.it.next().map(|Reverse(x)| x)
+        self.it.next().map(|x| x)
     }
 }
 

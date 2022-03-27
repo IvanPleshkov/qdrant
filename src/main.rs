@@ -10,109 +10,89 @@ mod tonic;
 use consensus::Consensus;
 #[cfg(feature = "consensus")]
 use slog::Drain;
-use std::io::Error;
-use std::sync::Arc;
-use std::thread;
-use std::thread::JoinHandle;
-use storage::content_manager::toc::TableOfContent;
 
-use crate::common::helpers::create_search_runtime;
-use crate::settings::Settings;
+use rand::{thread_rng, Rng};
+use segment::fixtures::index_fixtures::{
+    random_vector, FakeConditionChecker, TestRawScorerProducer,
+};
+use segment::index::hnsw_index::graph_layers::GraphLayers;
+use segment::index::hnsw_index::point_scorer::FilteredScorer;
+use segment::spaces::simple::{ EuclidMetric, CosineMetric, DotProductMetric };
+
+use bit_vec::BitVec;
+use segment::spaces::metric::Metric;
+use segment::types::{Filter, PointOffsetType, VectorElementType};
+use segment::vector_storage::simple_vector_storage::SimpleRawScorer;
+use std::time::{Duration, Instant};
+
+const M: usize = 4;
+const EF_CONSTRUCT: usize = 200;
+const USE_HEURISTIC: bool = true;
 
 fn main() -> std::io::Result<()> {
-    let settings = Settings::new().expect("Can't read config.");
-    std::env::set_var("RUST_LOG", &settings.log_level);
-    env_logger::init();
+    let start = Instant::now();
 
-    #[cfg(feature = "consensus")]
-    {
-        // `raft` crate uses `slog` crate so it is needed to use `slog_stdlog::StdLog` to forward
-        // logs from it to `log` crate
-        let slog_logger = slog::Logger::root(slog_stdlog::StdLog.fuse(), slog::o!());
+    let mut rng = thread_rng();
 
-        let (mut consensus, _message_sender) = Consensus::new(&slog_logger);
-        thread::Builder::new()
-            .name("raft".to_string())
-            .spawn(move || consensus.start())?;
+    let points: Vec<Vec<VectorElementType>> = vec![
+        vec![0.851758, 0.909671],
+        vec![0.823431, 0.372063],
+        vec![0.97826, 0.933157],
+        vec![0.39557, 0.306488],
+        vec![0.230606, 0.634397],
+        vec![0.514009, 0.399594],
+
+        vec![0.354438, 0.762611],
+        vec![0.0516154, 0.733427],
+        vec![0.769864, 0.288072],
+        vec![0.696896, 0.509403],
+        vec![0.805918, 0.923242],
+        vec![0.36507, 0.513271],
+        vec![0.759294, 0.128909],
+        vec![0.547961, 0.877969],
+        vec![0.481519, 0.909654],
+        vec![0.905498, 0.0285553],
+        vec![0.452462, 0.346844],
+        vec![0.826136, 0.84315],
+        vec![0.350968, 0.92784],
+        vec![0.309734, 0.531955],
+        vec![0.2932, 0.186106],
+        vec![0.754536, 0.228132],
+        vec![0.151885, 0.107752],
+        vec![0.0787534, 0.433617],
+        vec![0.347133, 0.368639],
+        
+    ];
+
+    let point_levels: Vec<usize> = vec![
+        0, 1, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 2,
+    ];
+
+    let mut graph_layers = GraphLayers::new(points.len(), M, M, EF_CONSTRUCT, 10, USE_HEURISTIC);
+    let fake_condition_checker = FakeConditionChecker {};
+    let deleted = BitVec::from_elem(points.len(), false);
+    let metric = DotProductMetric {};
+    for idx in 0..points.len() {
+        let added_vector = points[idx].clone();
+        let raw_scorer = SimpleRawScorer {
+            query: metric.preprocess(&added_vector).unwrap_or(added_vector),
+            metric: &metric,
+            vectors: &points,
+            deleted: &deleted,
+        };
+        let scorer = FilteredScorer::new(&raw_scorer, &fake_condition_checker, None);
+        let level = graph_layers.get_random_layer(&mut rng);
+        let level = point_levels[idx];
+        // println!("Random level {} vs actual {}", rlevel, level);
+
+        println!("");
+        println!("Insert point {}", idx);
+        graph_layers.link_new_point(idx as PointOffsetType, level, &scorer);
     }
+    graph_layers.dump();
 
-    // Create and own search runtime out of the scope of async context to ensure correct
-    // destruction of it
-    let runtime = create_search_runtime(settings.storage.performance.max_search_threads)
-        .expect("Can't create runtime.");
+    let duration = start.elapsed();
+    println!("Time elapsed is: {:?}", duration);
 
-    let runtime_handle = runtime.handle().clone();
-
-    let toc = TableOfContent::new(&settings.storage, runtime);
-    runtime_handle.block_on(async {
-        for collection in toc.all_collections().await {
-            log::info!("Loaded collection: {}", collection);
-        }
-    });
-
-    let toc_arc = Arc::new(toc);
-
-    let mut handles: Vec<JoinHandle<Result<(), Error>>> = vec![];
-
-    #[cfg(feature = "web")]
-    {
-        let toc_arc = toc_arc.clone();
-        let settings = settings.clone();
-        let handle = thread::Builder::new()
-            .name("web".to_string())
-            .spawn(move || actix::init(toc_arc, settings))
-            .unwrap();
-        handles.push(handle);
-    }
-
-    if let Some(grpc_port) = settings.service.grpc_port {
-        let toc_arc = toc_arc.clone();
-        let settings = settings.clone();
-        let handle = thread::Builder::new()
-            .name("grpc".to_string())
-            .spawn(move || tonic::init(toc_arc, settings.service.host, grpc_port))
-            .unwrap();
-        handles.push(handle);
-    } else {
-        log::info!("gRPC endpoint disabled");
-    }
-
-    #[cfg(feature = "service_debug")]
-    {
-        use parking_lot::deadlock;
-        use std::time::Duration;
-
-        const DEADLOCK_CHECK_PERIOD: Duration = Duration::from_secs(10);
-
-        thread::Builder::new()
-            .name("deadlock_checker".to_string())
-            .spawn(move || loop {
-                thread::sleep(DEADLOCK_CHECK_PERIOD);
-                let deadlocks = deadlock::check_deadlock();
-                if deadlocks.is_empty() {
-                    continue;
-                }
-
-                let mut error = format!("{} deadlocks detected\n", deadlocks.len());
-                for (i, threads) in deadlocks.iter().enumerate() {
-                    error.push_str(&format!("Deadlock #{}\n", i));
-                    for t in threads {
-                        error.push_str(&format!(
-                            "Thread Id {:#?}\n{:#?}\n",
-                            t.thread_id(),
-                            t.backtrace()
-                        ));
-                    }
-                }
-                log::error!("{}", error);
-            })
-            .unwrap();
-    }
-
-    for handle in handles.into_iter() {
-        handle.join().expect("Couldn't join on the thread")?;
-    }
-    drop(toc_arc);
-    drop(settings);
     Ok(())
 }

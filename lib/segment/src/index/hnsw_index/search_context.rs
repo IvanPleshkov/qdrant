@@ -4,22 +4,24 @@ use crate::vector_storage::ScoredPointOffset;
 use num_traits::float::FloatCore;
 use std::collections::BinaryHeap;
 use std::iter::FromIterator;
+use std::cmp::Reverse;
 
 /// Structure that holds context of the search
 pub struct SearchContext {
     /// Overall nearest points found so far
     pub nearest: FixedLengthPriorityQueue<ScoredPointOffset>,
     /// Current candidates to process
-    pub candidates: BinaryHeap<ScoredPointOffset>,
+    pub candidates: BinaryHeap<Reverse<ScoredPointOffset>>,
 }
 
 impl SearchContext {
     pub fn new(entry_point: ScoredPointOffset, ef: usize) -> Self {
         let mut nearest = FixedLengthPriorityQueue::new(ef);
         nearest.push(entry_point);
+        println!("CAND ADD {} with score {}", entry_point.idx, entry_point.score); //ivandebug
         SearchContext {
             nearest,
-            candidates: BinaryHeap::from_iter([entry_point]),
+            candidates: BinaryHeap::from_iter([Reverse(entry_point)]),
         }
     }
 
@@ -38,7 +40,8 @@ impl SearchContext {
             Some(removed) => removed.idx != score_point.idx,
         };
         if was_added {
-            self.candidates.push(score_point);
+            println!("CAND ADD {} with score {}", score_point.idx, score_point.score); //ivandebug
+            self.candidates.push(Reverse(score_point));
         }
     }
 }

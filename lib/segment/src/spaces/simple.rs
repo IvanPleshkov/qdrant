@@ -26,6 +26,7 @@ impl Metric for EuclidMetric {
     }
 
     fn similarity(&self, v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
+        /*
         #[cfg(target_arch = "x86_64")]
         {
             if is_x86_feature_detected!("avx") && is_x86_feature_detected!("fma") {
@@ -46,7 +47,7 @@ impl Metric for EuclidMetric {
                 return unsafe { euclid_similarity_neon(v1, v2) };
             }
         }
-
+*/
         euclid_similarity(v1, v2)
     }
 
@@ -153,7 +154,8 @@ pub fn euclid_similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> 
         .zip(v2.iter().copied())
         .map(|(a, b)| (a - b).powi(2))
         .sum();
-    -s.sqrt()
+    s
+    //-s.sqrt()
 }
 
 pub fn cosine_preprocess(vector: &[VectorElementType]) -> Vec<VectorElementType> {
