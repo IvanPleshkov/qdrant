@@ -57,15 +57,15 @@ impl GraphLayers {
             }
         }
 
-        //println!("connections = {{"); //ivandebug
-        //for level_connections in connections {
-            //println!("{{"); //ivandebug
-            //for connection in level_connections {
-                //println!("{{ {}, {} }},", connection.0, connection.1); //ivandebug
-            //}
-            //println!("}},"); //ivandebug
-        //}
-        //println!("}}"); //ivandebug
+        println!("connections = {{"); //ivandebug
+        for level_connections in connections {
+            println!("{{"); //ivandebug
+            for connection in level_connections {
+                println!("{{ {}, {} }},", connection.0, connection.1); //ivandebug
+            }
+            println!("}},"); //ivandebug
+        }
+        println!("}}"); //ivandebug
     }
 
     pub fn new_with_params(

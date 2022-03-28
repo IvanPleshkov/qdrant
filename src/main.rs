@@ -89,7 +89,7 @@ fn main() -> std::io::Result<()> {
         //println!("Insert point {}", idx);
         graph_layers.link_new_point(idx as PointOffsetType, level, &scorer);
     }
-    //graph_layers.dump();
+    graph_layers.dump();
 
     let duration = start.elapsed();
     println!("Time elapsed is: {:?}", duration);

@@ -165,7 +165,8 @@ pub fn cosine_preprocess(vector: &[VectorElementType]) -> Vec<VectorElementType>
 }
 
 pub fn dot_similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
-    v1.iter().zip(v2).map(|(a, b)| a * b).sum()
+    let sum : ScoreType = v1.iter().zip(v2).map(|(a, b)| a * b).sum();
+    1. - sum
 }
 
 #[cfg(test)]

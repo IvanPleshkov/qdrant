@@ -108,7 +108,7 @@ pub(crate) unsafe fn dot_similarity_neon(
     for i in 0..n - m {
         result += (*ptr1.add(i)) * (*ptr2.add(i));
     }
-    result
+    1. - result
 }
 
 #[cfg(test)]
