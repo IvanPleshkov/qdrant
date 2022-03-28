@@ -29,12 +29,8 @@ const M: usize = 4;
 const EF_CONSTRUCT: usize = 200;
 const USE_HEURISTIC: bool = true;
 
-fn main() -> std::io::Result<()> {
-    let start = Instant::now();
-
-    let mut rng = thread_rng();
-
-    let points: Vec<Vec<VectorElementType>> = vec![
+fn get_points() -> (Vec<Vec<VectorElementType>>, Vec<usize>) {
+    (vec![
         vec![0.851758, 0.909671],
         vec![0.823431, 0.372063],
         vec![0.97826, 0.933157],
@@ -60,13 +56,33 @@ fn main() -> std::io::Result<()> {
         vec![0.754536, 0.228132],
         vec![0.151885, 0.107752],
         vec![0.0787534, 0.433617],
-        vec![0.347133, 0.368639],
-        
-    ];
-
-    let point_levels: Vec<usize> = vec![
+        vec![0.347133, 0.368639],  
+    ],
+    vec![
         0, 1, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 2,
-    ];
+    ])
+}
+
+fn random_data() -> (Vec<Vec<VectorElementType>>, Vec<usize>) {
+    let count : usize = 5_000;
+    let dim : usize = 32;
+    let mut rng = thread_rng();
+
+    let mut points : Vec<Vec<VectorElementType>> = vec![];
+    for _ in 0..count {
+        points.push(random_vector(&mut rng, dim));
+    }
+
+    (points, vec![])
+}
+
+fn main() -> std::io::Result<()> {
+    let start = Instant::now();
+
+    let mut rng = thread_rng();
+
+    // let (points, point_levels) = get_points();
+    let (points, point_levels) = random_data();
 
     let mut graph_layers = GraphLayers::new(points.len(), M, M, EF_CONSTRUCT, 10, USE_HEURISTIC);
     let fake_condition_checker = FakeConditionChecker {};
@@ -81,15 +97,43 @@ fn main() -> std::io::Result<()> {
             deleted: &deleted,
         };
         let scorer = FilteredScorer::new(&raw_scorer, &fake_condition_checker, None);
-        let level = graph_layers.get_random_layer(&mut rng);
-        let level = point_levels[idx];
-        // println!("Random level {} vs actual {}", rlevel, level);
+    
+        let level = if idx < point_levels.len() {
+            point_levels[idx]
+        } else {
+            graph_layers.get_random_layer(&mut rng)
+        };
 
         //println!("");
         //println!("Insert point {}", idx);
         graph_layers.link_new_point(idx as PointOffsetType, level, &scorer);
     }
-    graph_layers.dump();
+    //  graph_layers.dump();
+
+    let query = random_vector(&mut rng, points[0].len());
+
+    let scorer = SimpleRawScorer {
+        query: metric.preprocess(&query).unwrap_or(query.clone()),
+        metric: &metric,
+        vectors: &points,
+        deleted: &deleted,
+    };
+    let scorer = FilteredScorer::new(&scorer, &fake_condition_checker, None);
+    let found = graph_layers.search(5, EF_CONSTRUCT, &scorer);
+    for idx in found.iter().copied() {
+        println!("found {} with dist {}", idx.idx, idx.score);
+    }
+
+    let mut best = 0;
+    let mut dist = 1000000000.;
+    for idx in 0..points.len() {
+        let d = metric.similarity(&query, &points[idx]);
+        if d < dist {
+            best = idx;
+            dist = d;
+        }
+    }
+    println!("best {} with dist {}", best, dist);
 
     let duration = start.elapsed();
     println!("Time elapsed is: {:?}", duration);
