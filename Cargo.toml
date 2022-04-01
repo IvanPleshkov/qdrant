@@ -53,7 +53,7 @@ collection = { path = "lib/collection" }
 storage = { path = "lib/storage" }
 
 [build-dependencies]
-tonic-build = { version = "0.6.2", features = ["prost"] }
+tonic-build = { version = "0.7.0", features = ["prost"] }
 
 [[bin]]
 name = "schema_generator"
