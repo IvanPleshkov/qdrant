@@ -411,8 +411,26 @@ impl GraphLayers {
                             }
                         }
                     } else {
-                        //todo
-                        panic!("only heuristic"); //ivandebug
+                        for nearest_point in &nearest_points {
+                            Self::connect_new_point(
+                                &mut self.links_layers[point_id as usize][curr_level],
+                                nearest_point.idx,
+                                point_id,
+                                level_m,
+                                scorer,
+                            );
+
+                            Self::connect_new_point(
+                                &mut self.links_layers[nearest_point.idx as usize][curr_level],
+                                point_id,
+                                nearest_point.idx,
+                                level_m,
+                                scorer,
+                            );
+                            if nearest_point.score > level_entry.score {
+                                level_entry = *nearest_point;
+                            }
+                        }
                     }
                 }
             }
