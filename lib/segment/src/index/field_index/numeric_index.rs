@@ -6,13 +6,16 @@ use num_traits::ToPrimitive;
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
 
-use crate::index::field_index::{CardinalityEstimation, PayloadBlockCondition, PrimaryCondition};
-use crate::index::field_index::{FieldIndex, PayloadFieldIndex, PayloadFieldIndexBuilder};
+use crate::index::field_index::stat_tools::estimate_multi_value_selection_cardinality;
+use crate::index::field_index::{
+    CardinalityEstimation, FieldIndex, PayloadBlockCondition, PayloadFieldIndex,
+    PayloadFieldIndexBuilder, PrimaryCondition, ValueIndexer,
+};
 use crate::types::{
-    FieldCondition, FloatPayloadType, IntPayloadType, PayloadKeyType, PayloadType, PointOffsetType,
-    Range,
+    FieldCondition, FloatPayloadType, IntPayloadType, PayloadKeyType, PointOffsetType, Range,
 };
 use itertools::Itertools;
+use serde_json::Value;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Element<N> {
@@ -26,6 +29,7 @@ pub struct PersistedNumericIndex<N: ToPrimitive + Clone> {
     /// Number of unique element ids.
     /// Each point can have several values
     points_count: usize,
+    max_values_per_point: usize,
     elements: Vec<Element<N>>,
 }
 
@@ -107,7 +111,6 @@ impl<N: ToPrimitive + Clone> PersistedNumericIndex<N> {
 
         let values_count: i64 = upper_index as i64 - lower_index as i64;
         let total_values = self.elements.len() as i64;
-        let value_per_point = total_values as f64 / self.points_count as f64;
 
         // Example: points_count = 1000, total values = 2000, values_count = 500
         // min = max(1, 500 - (2000 - 1000)) = 1
@@ -118,22 +121,40 @@ impl<N: ToPrimitive + Clone> PersistedNumericIndex<N> {
         // min = max(1, 500 - (1200 - 1000)) = 300
         // exp = 500 / (1200 / 1000) = 416
         // max = min(1000, 500) = 500
-        CardinalityEstimation {
-            primary_clauses: vec![],
-            min: max(
+        let expected_min = max(
+            values_count as usize / self.max_values_per_point,
+            max(
                 min(1, values_count),
                 values_count - (total_values - self.points_count as i64),
             ) as usize,
-            exp: (values_count as f64 / value_per_point) as usize,
-            max: min(self.points_count as i64, values_count) as usize,
+        );
+        let expected_max = min(self.points_count as i64, values_count) as usize;
+
+        // estimate_multi_value_selection_cardinality might overflow at some corner cases
+        // so it is better to limit its value with min and max
+        let estimation = estimate_multi_value_selection_cardinality(
+            self.points_count,
+            total_values as usize,
+            values_count as usize,
+        )
+        .round() as usize;
+
+        CardinalityEstimation {
+            primary_clauses: vec![],
+            min: expected_min,
+            exp: min(expected_max, max(estimation, expected_min)),
+            max: expected_max,
         }
     }
 
-    fn add_many(&mut self, id: PointOffsetType, values: &[N]) {
-        for value in values.iter().cloned() {
+    fn add_many_to_list(&mut self, id: PointOffsetType, values: impl IntoIterator<Item = N>) {
+        let mut total_values = 0;
+        for value in values {
             self.elements.push(Element { id, value });
+            total_values += 1;
         }
         self.points_count += 1;
+        self.max_values_per_point = self.max_values_per_point.max(total_values);
     }
 
     fn condition_iter(&self, range: &Range) -> Box<dyn Iterator<Item = PointOffsetType> + '_> {
@@ -141,7 +162,8 @@ impl<N: ToPrimitive + Clone> PersistedNumericIndex<N> {
         Box::new(
             (&self.elements[lower_index..upper_index])
                 .iter()
-                .map(|element| element.id),
+                .map(|element| element.id)
+                .unique(),
         )
     }
 }
@@ -215,12 +237,22 @@ impl<N: ToPrimitive + Clone> PayloadFieldIndex for PersistedNumericIndex<N> {
     }
 }
 
-impl PayloadFieldIndexBuilder for PersistedNumericIndex<FloatPayloadType> {
-    fn add(&mut self, id: PointOffsetType, value: &PayloadType) {
-        match value {
-            PayloadType::Float(number) => self.add_many(id, number),
-            _ => panic!("Unexpected payload type: {:?}", value),
+impl ValueIndexer<FloatPayloadType> for PersistedNumericIndex<FloatPayloadType> {
+    fn add_many(&mut self, id: PointOffsetType, values: Vec<FloatPayloadType>) {
+        self.add_many_to_list(id, values)
+    }
+
+    fn get_value(&self, value: &Value) -> Option<FloatPayloadType> {
+        if let Value::Number(num) = value {
+            return num.as_f64();
         }
+        None
+    }
+}
+
+impl PayloadFieldIndexBuilder for PersistedNumericIndex<FloatPayloadType> {
+    fn add(&mut self, id: PointOffsetType, value: &Value) {
+        self.add_point(id, value)
     }
 
     fn build(&mut self) -> FieldIndex {
@@ -228,17 +260,28 @@ impl PayloadFieldIndexBuilder for PersistedNumericIndex<FloatPayloadType> {
         elements.sort_by_key(|el| OrderedFloat(el.value));
         FieldIndex::FloatIndex(PersistedNumericIndex {
             points_count: self.points_count,
+            max_values_per_point: self.max_values_per_point,
             elements,
         })
     }
 }
 
-impl PayloadFieldIndexBuilder for PersistedNumericIndex<IntPayloadType> {
-    fn add(&mut self, id: PointOffsetType, value: &PayloadType) {
-        match value {
-            PayloadType::Integer(number) => self.add_many(id, number),
-            _ => panic!("Unexpected payload type: {:?}", value),
+impl ValueIndexer<IntPayloadType> for PersistedNumericIndex<IntPayloadType> {
+    fn add_many(&mut self, id: PointOffsetType, values: Vec<IntPayloadType>) {
+        self.add_many_to_list(id, values)
+    }
+
+    fn get_value(&self, value: &Value) -> Option<IntPayloadType> {
+        if let Value::Number(num) = value {
+            return num.as_i64();
         }
+        None
+    }
+}
+
+impl PayloadFieldIndexBuilder for PersistedNumericIndex<IntPayloadType> {
+    fn add(&mut self, id: PointOffsetType, value: &Value) {
+        self.add_point(id, value)
     }
 
     fn build(&mut self) -> FieldIndex {
@@ -246,6 +289,7 @@ impl PayloadFieldIndexBuilder for PersistedNumericIndex<IntPayloadType> {
         elements.sort_by_key(|el| el.value);
         FieldIndex::IntIndex(PersistedNumericIndex {
             points_count: self.points_count,
+            max_values_per_point: self.max_values_per_point,
             elements,
         })
     }
@@ -254,12 +298,15 @@ impl PayloadFieldIndexBuilder for PersistedNumericIndex<IntPayloadType> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand::prelude::StdRng;
+    use rand::{Rng, SeedableRng};
 
     #[test]
     fn test_payload_blocks() {
         let threshold = 4;
         let index = PersistedNumericIndex {
             points_count: 9,
+            max_values_per_point: 1,
             elements: vec![
                 Element { id: 1, value: 1.0 },
                 Element { id: 2, value: 1.0 },
@@ -301,6 +348,7 @@ mod tests {
     fn test_bsearch() {
         let index = PersistedNumericIndex {
             points_count: 9,
+            max_values_per_point: 1,
             elements: vec![
                 Element { id: 1, value: 1.0 },
                 Element { id: 2, value: 3.0 },
@@ -333,10 +381,95 @@ mod tests {
         assert_eq!(elements[elements.len() - 1].id, 7);
     }
 
+    fn random_index(num_points: usize, values_per_point: usize) -> PersistedNumericIndex<f64> {
+        let mut rng = StdRng::seed_from_u64(42);
+        let mut elements: Vec<Element<f64>> = vec![];
+
+        for i in 0..num_points {
+            for _ in 0..values_per_point {
+                elements.push(Element {
+                    id: i as PointOffsetType,
+                    value: rng.gen_range(0.0..100.0),
+                });
+            }
+        }
+
+        elements.sort_by_key(|x| OrderedFloat(x.value));
+
+        PersistedNumericIndex {
+            points_count: num_points,
+            max_values_per_point: values_per_point,
+            elements,
+        }
+    }
+
+    #[test]
+    fn test_cardinality_exp_small() {
+        let index = random_index(1000, 2);
+
+        let query = Range {
+            lt: Some(20.0),
+            gt: None,
+            gte: Some(10.0),
+            lte: None,
+        };
+
+        let estimation = index.range_cardinality(&query);
+
+        let result = index
+            .filter(&FieldCondition {
+                key: "".to_string(),
+                r#match: None,
+                range: Some(query),
+                geo_bounding_box: None,
+                geo_radius: None,
+            })
+            .unwrap()
+            .collect_vec();
+
+        assert!(estimation.min <= result.len());
+        assert!(estimation.max >= result.len());
+
+        eprintln!("estimation = {:#?}", estimation);
+        eprintln!("result.len() = {:#?}", result.len());
+    }
+
+    #[test]
+    fn test_cardinality_exp_large() {
+        let index = random_index(1000, 2);
+
+        let query = Range {
+            lt: Some(60.0),
+            gt: None,
+            gte: Some(10.0),
+            lte: None,
+        };
+
+        let estimation = index.range_cardinality(&query);
+
+        let result = index
+            .filter(&FieldCondition {
+                key: "".to_string(),
+                r#match: None,
+                range: Some(query),
+                geo_bounding_box: None,
+                geo_radius: None,
+            })
+            .unwrap()
+            .collect_vec();
+
+        assert!(estimation.min <= result.len());
+        assert!(estimation.max >= result.len());
+
+        eprintln!("estimation = {:#?}", estimation);
+        eprintln!("result.len() = {:#?}", result.len());
+    }
+
     #[test]
     fn test_cardinality() {
         let index = PersistedNumericIndex {
             points_count: 9,
+            max_values_per_point: 1,
             elements: vec![
                 Element { id: 1, value: 1.0 },
                 Element { id: 2, value: 3.0 },
@@ -375,6 +508,7 @@ mod tests {
     fn test_serde() {
         let index = PersistedNumericIndex {
             points_count: 9,
+            max_values_per_point: 1,
             elements: vec![Element { id: 1, value: 1 }, Element { id: 2, value: 3 }],
         };
 
