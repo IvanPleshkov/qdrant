@@ -2,9 +2,9 @@ use crate::spaces::tools::FixedLengthPriorityQueue;
 use crate::types::ScoreType;
 use crate::vector_storage::ScoredPointOffset;
 use num_traits::float::FloatCore;
+use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::iter::FromIterator;
-use std::cmp::Reverse;
 
 /// Structure that holds context of the search
 pub struct SearchContext {

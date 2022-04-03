@@ -39,11 +39,7 @@ impl<T: Ord> FixedLengthPriorityQueue<T> {
     }
 
     pub fn into_vec(self) -> Vec<T> {
-        self.heap
-            .into_sorted_vec()
-            .into_iter()
-            .map(|x| x)
-            .collect()
+        self.heap.into_sorted_vec().into_iter().map(|x| x).collect()
     }
 
     pub fn iter(&self) -> Iter<'_, T> {

@@ -291,7 +291,7 @@ impl GraphLayers {
         F: FnMut(PointOffsetType, PointOffsetType) -> ScoreType,
     {
         if candidates_count < m {
-            let mut result : Vec<PointOffsetType> = candidates.map(|x| x.idx).collect();
+            let mut result: Vec<PointOffsetType> = candidates.map(|x| x.idx).collect();
             result.reverse();
             return result;
         }
@@ -329,7 +329,12 @@ impl GraphLayers {
     {
         let candidates_count = candidates.len();
         let closest_iter = candidates.into_iter();
-        Self::select_candidate_with_heuristic_from_sorted(closest_iter, candidates_count, m, score_internal)
+        Self::select_candidate_with_heuristic_from_sorted(
+            closest_iter,
+            candidates_count,
+            m,
+            score_internal,
+        )
     }
 
     pub fn link_new_point(
