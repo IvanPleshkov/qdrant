@@ -67,7 +67,7 @@ fn get_points() -> (Vec<Vec<VectorElementType>>, Vec<usize>) {
 
 fn random_data() -> (Vec<Vec<VectorElementType>>, Vec<usize>) {
     let count : usize = 5_000;
-    let dim : usize = 32;
+    let dim : usize = 128;
     let mut rng = thread_rng();
 
     let mut points : Vec<Vec<VectorElementType>> = vec![];
@@ -83,8 +83,8 @@ fn main() -> std::io::Result<()> {
 
     let mut rng = thread_rng();
 
+    let (points, point_levels) = random_data();
     // let (points, point_levels) = get_points();
-    let (points, point_levels) = get_points();
 
     let mut graph_layers = GraphLayers::new(points.len(), M, M * 2, EF_CONSTRUCT, 10, USE_HEURISTIC);
     let fake_condition_checker = FakeConditionChecker {};
@@ -106,11 +106,11 @@ fn main() -> std::io::Result<()> {
             graph_layers.get_random_layer(&mut rng)
         };
 
-        println!("");
-        println!("Insert point {} {} {}", idx, raw_scorer.query[0], raw_scorer.query[1]);
+        //println!("");
+        //println!("Insert point {} {} {}", idx, raw_scorer.query[0], raw_scorer.query[1]);
         graph_layers.link_new_point(idx as PointOffsetType, level, &scorer);
     }
-    graph_layers.dump();
+    //graph_layers.dump();
 
     let query = random_vector(&mut rng, points[0].len());
 

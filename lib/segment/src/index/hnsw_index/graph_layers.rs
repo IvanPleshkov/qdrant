@@ -175,12 +175,9 @@ impl GraphLayers {
     ) {
         while let Some(candidate) = searcher.candidates.pop() {
             let candidate = candidate.0;
-            // if ((-curr_el_pair.first) > lowerBound && top_candidates.size() == ef_construction_) {
             if candidate.score > searcher.lower_bound() {
-                println!("CAND {} BREAK {} > {}", candidate.idx, candidate.score, searcher.lower_bound()); //ivandebug
                 break;
             }
-            println!("CAND {} with score {} and limit {}", candidate.idx, candidate.score, searcher.lower_bound()); //ivandebug
             let mut links_iter = self
                 .links(candidate.idx, level)
                 .iter()
@@ -236,8 +233,6 @@ impl GraphLayers {
             score: points_scorer.score_point(entry_point),
         };
         for level in rev_range(top_level, target_level) {
-            println!("EP LEVEL {}: curobj = {}, curdist = {}", level, current_point.idx, current_point.score); //ivandebug
-
             let mut changed = true;
             while changed {
                 changed = false;
@@ -245,13 +240,9 @@ impl GraphLayers {
                 let links_count = links.len();
                 let mut links = links.iter().copied();
                 points_scorer.score_iterable_points(&mut links, links_count, |score_point| {
-                    println!("EP COMPARE: {}, {}, ({} < {})", score_point.idx, current_point.idx, score_point.score, current_point.score);//ivandebug
                     if score_point.score < current_point.score {
                         changed = true;
                         current_point = score_point;
-
-                        println!("EP CHANGE: curobj = {}, curdist = {}", current_point.idx, current_point.score); //ivandebug
-
                     }
                 });
             }
@@ -300,18 +291,15 @@ impl GraphLayers {
         F: FnMut(PointOffsetType, PointOffsetType) -> ScoreType,
     {
         if candidates_count < m {
-            println!("HEURISTIC SKIP {} < {}", candidates_count, m); //ivandebug
             let mut result : Vec<PointOffsetType> = candidates.map(|x| x.idx).collect();
             result.reverse();
             return result;
         }
-        println!(""); //ivandebug
 
         let mut result_list = vec![];
         result_list.reserve(m);
         for current_closest in candidates {
             if result_list.len() >= m {
-                println!("HEURISTIC STOP"); //ivandebug
                 break;
             }
             let mut is_good = true;
@@ -323,20 +311,10 @@ impl GraphLayers {
                 }
             }
             if is_good {
-                println!("HEURISTIC PASS {}", current_closest.idx); //ivandebug
                 result_list.push(current_closest.idx);
-            } else {
-                println!("HEURISTIC SKIP {}", current_closest.idx); //ivandebug
             }
         }
         result_list.reverse();
-
-        if !result_list.is_empty() {
-            for point in result_list.iter().copied() {
-                println!("HEURISTIC {}", point); //ivandebug
-            }
-        }
-
         result_list
     }
 
@@ -400,8 +378,6 @@ impl GraphLayers {
                 let scorer = |a, b| points_scorer.score_internal(a, b);
 
                 for curr_level in (0..=linking_level).rev() {
-                    println!("INSERT LEVEL {} WITH EP {}", curr_level, level_entry.idx); //ivandebug
-
                     let level_m = self.get_m(curr_level);
                     let existing_links = &self.links_layers[point_id as usize][curr_level];
 
@@ -412,12 +388,6 @@ impl GraphLayers {
                         points_scorer,
                         existing_links,
                     );
-                    let mut nearest_clone = nearest_points.clone();
-                    while !nearest_clone.is_empty() {
-                        let nearest_point = nearest_clone.top().unwrap().clone();
-                        println!("NEAREST {}, score {}", nearest_point.idx, nearest_point.score); //ivandebug
-                        nearest_clone.pop();
-                    }
 
                     if self.use_heuristic {
                         let selected_nearest =
@@ -430,10 +400,8 @@ impl GraphLayers {
                                 &mut self.links_layers[other_point as usize][curr_level];
                             if other_point_links.len() < level_m {
                                 // If linked point is lack of neighbours
-                                println!("LINK SIMPLE {}-{}", point_id, other_point);//ivandebug
                                 other_point_links.push(point_id);
                             } else {
-                                println!("RELINKING {}", other_point);//ivandebug
                                 let mut candidates = BinaryHeap::with_capacity(level_m + 1);
                                 candidates.push(ScoredPointOffset {
                                     idx: point_id,
@@ -457,7 +425,6 @@ impl GraphLayers {
                                     );
                                 other_point_links.clear(); // this do not free memory, which is good
                                 for selected in selected_candidates.iter().copied() {
-                                    println!("RELINK RESULT {}", selected);
                                     other_point_links.push(selected);
                                 }
                             }
