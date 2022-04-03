@@ -352,7 +352,6 @@ impl GraphLayers {
                         score: points_scorer.score_internal(point_id, entry_point.point_id),
                     }
                 };
-
                 // minimal common level for entry points
                 let linking_level = min(level, entry_point.level);
 
