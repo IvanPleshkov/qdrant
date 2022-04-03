@@ -42,7 +42,6 @@ actix-web = { version = "4.0.1", optional = true }
 tonic = "0.6.2"
 num-traits = "0.2.14"
 prost = "0.9"
-bit-vec = "0.6"
 prost-types = "0.9.0"
 
 raft = { version = "0.6.0", features = ["prost-codec"], default-features = false, optional = true }
