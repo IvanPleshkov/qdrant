@@ -26,7 +26,7 @@ use segment::vector_storage::simple_vector_storage::SimpleRawScorer;
 use std::time::{Duration, Instant};
 
 const M: usize = 4;
-const EF_CONSTRUCT: usize = 200;
+const EF_CONSTRUCT: usize = 64;
 const USE_HEURISTIC: bool = true;
 
 fn get_points() -> (Vec<Vec<VectorElementType>>, Vec<usize>) {
@@ -37,12 +37,13 @@ fn get_points() -> (Vec<Vec<VectorElementType>>, Vec<usize>) {
         vec![0.39557, 0.306488],
         vec![0.230606, 0.634397],
         vec![0.514009, 0.399594],
-
         vec![0.354438, 0.762611],
         vec![0.0516154, 0.733427],
         vec![0.769864, 0.288072],
         vec![0.696896, 0.509403],
         vec![0.805918, 0.923242],
+
+        
         vec![0.36507, 0.513271],
         vec![0.759294, 0.128909],
         vec![0.547961, 0.877969],
@@ -57,6 +58,7 @@ fn get_points() -> (Vec<Vec<VectorElementType>>, Vec<usize>) {
         vec![0.151885, 0.107752],
         vec![0.0787534, 0.433617],
         vec![0.347133, 0.368639],  
+        
     ],
     vec![
         0, 1, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 2,
@@ -82,9 +84,9 @@ fn main() -> std::io::Result<()> {
     let mut rng = thread_rng();
 
     // let (points, point_levels) = get_points();
-    let (points, point_levels) = random_data();
+    let (points, point_levels) = get_points();
 
-    let mut graph_layers = GraphLayers::new(points.len(), M, M, EF_CONSTRUCT, 10, USE_HEURISTIC);
+    let mut graph_layers = GraphLayers::new(points.len(), M, M * 2, EF_CONSTRUCT, 10, USE_HEURISTIC);
     let fake_condition_checker = FakeConditionChecker {};
     let deleted = BitVec::from_elem(points.len(), false);
     let metric = DotProductMetric {};
@@ -104,11 +106,11 @@ fn main() -> std::io::Result<()> {
             graph_layers.get_random_layer(&mut rng)
         };
 
-        //println!("");
-        //println!("Insert point {}", idx);
+        println!("");
+        println!("Insert point {} {} {}", idx, raw_scorer.query[0], raw_scorer.query[1]);
         graph_layers.link_new_point(idx as PointOffsetType, level, &scorer);
     }
-    //  graph_layers.dump();
+    graph_layers.dump();
 
     let query = random_vector(&mut rng, points[0].len());
 
