@@ -44,30 +44,6 @@ pub struct GraphLayers {
 ///
 /// Assume all scores are similarities. Larger score = closer points
 impl GraphLayers {
-    pub fn dump(&self) {
-        let mut connections: Vec<Vec<(PointOffsetType, PointOffsetType)>> = Vec::new();
-        for i in 0..self.links_layers.len() {
-            if connections.len() <= self.links_layers[i].len() {
-                connections.resize(self.links_layers[i].len(), Vec::new());
-            }
-            for l in 0..self.links_layers[i].len() {
-                for j in &self.links_layers[i][l] {
-                    connections[l].push((i as PointOffsetType, *j as PointOffsetType));
-                }
-            }
-        }
-
-        println!("connections = {{"); //ivandebug
-        for level_connections in connections {
-            println!("{{"); //ivandebug
-            for connection in level_connections {
-                println!("{{ {}, {} }},", connection.0, connection.1); //ivandebug
-            }
-            println!("}},"); //ivandebug
-        }
-        println!("}}"); //ivandebug
-    }
-
     pub fn new_with_params(
         num_vectors: usize, // Initial number of points in index
         m: usize,           // Expected M for non-first layer
