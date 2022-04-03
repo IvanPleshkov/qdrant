@@ -32,14 +32,14 @@ impl<T: Ord> FixedLengthPriorityQueue<T> {
         match self.heap.peek() {
             Some(x) if x < &value => {
                 self.heap.push(value);
-                self.heap.pop().map(|x| x)
+                self.heap.pop()
             }
             _ => Some(value),
         }
     }
 
     pub fn into_vec(self) -> Vec<T> {
-        self.heap.into_sorted_vec().into_iter().map(|x| x).collect()
+        self.heap.into_sorted_vec().into_iter().collect()
     }
 
     pub fn iter(&self) -> Iter<'_, T> {
@@ -79,7 +79,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.it.next().map(|x| x)
+        self.it.next()
     }
 }
 
@@ -87,7 +87,7 @@ impl<T> Iterator for IntoIter<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.it.next().map(|x| x)
+        self.it.next()
     }
 }
 

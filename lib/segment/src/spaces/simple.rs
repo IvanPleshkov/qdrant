@@ -26,28 +26,26 @@ impl Metric for EuclidMetric {
     }
 
     fn similarity(&self, v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
-        /*
-                #[cfg(target_arch = "x86_64")]
-                {
-                    if is_x86_feature_detected!("avx") && is_x86_feature_detected!("fma") {
-                        return unsafe { euclid_similarity_avx(v1, v2) };
-                    }
-                }
+        #[cfg(target_arch = "x86_64")]
+        {
+            if is_x86_feature_detected!("avx") && is_x86_feature_detected!("fma") {
+                return unsafe { euclid_similarity_avx(v1, v2) };
+            }
+        }
 
-                #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-                {
-                    if is_x86_feature_detected!("sse") {
-                        return unsafe { euclid_similarity_sse(v1, v2) };
-                    }
-                }
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        {
+            if is_x86_feature_detected!("sse") {
+                return unsafe { euclid_similarity_sse(v1, v2) };
+            }
+        }
 
-                #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
-                {
-                    if std::arch::is_aarch64_feature_detected!("neon") {
-                        return unsafe { euclid_similarity_neon(v1, v2) };
-                    }
-                }
-        */
+        #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+        {
+            if std::arch::is_aarch64_feature_detected!("neon") {
+                return unsafe { euclid_similarity_neon(v1, v2) };
+            }
+        }
         euclid_similarity(v1, v2)
     }
 
@@ -148,14 +146,11 @@ impl Metric for CosineMetric {
 }
 
 pub fn euclid_similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
-    let s: ScoreType = v1
-        .iter()
+    v1.iter()
         .copied()
         .zip(v2.iter().copied())
         .map(|(a, b)| (a - b).powi(2))
-        .sum();
-    s
-    //-s.sqrt()
+        .sum()
 }
 
 pub fn cosine_preprocess(vector: &[VectorElementType]) -> Vec<VectorElementType> {

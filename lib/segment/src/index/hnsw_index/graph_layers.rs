@@ -335,7 +335,7 @@ impl GraphLayers {
 
             // Entry point found.
             Some(entry_point) => {
-                let level_entry = if level < self.max_level {
+                let mut level_entry = if level < self.max_level {
                     // The entry point is higher than a new point
                     // Let's find closest one on same level
 
