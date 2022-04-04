@@ -242,7 +242,7 @@ impl GraphLayers {
         let mut id_to_insert = links.len();
         for (i, &item) in links.iter().enumerate() {
             let target_to_link = score_internal(target_point_id, item);
-            if target_to_link < new_to_target {
+            if target_to_link > new_to_target {
                 id_to_insert = i;
                 break;
             }
@@ -540,9 +540,8 @@ mod tests {
         ];
 
         let scorer = |a: PointOffsetType, b: PointOffsetType| {
-            -((points[a as usize][0] - points[b as usize][0]).powi(2)
-                + (points[a as usize][1] - points[b as usize][1]).powi(2))
-            .sqrt()
+            (points[a as usize][0] - points[b as usize][0]).powi(2)
+                + (points[a as usize][1] - points[b as usize][1]).powi(2)
         };
 
         let mut insert_ids = (1..points.len() as PointOffsetType).collect_vec();
@@ -557,7 +556,7 @@ mod tests {
 
         let res = GraphLayers::select_candidates_with_heuristic(candidates, m, scorer);
 
-        assert_eq!(&res, &vec![1, 3, 6]);
+        assert_eq!(&res, &vec![6, 3, 1]);
 
         let mut rng = StdRng::seed_from_u64(42);
 
