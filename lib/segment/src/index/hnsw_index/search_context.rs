@@ -2,6 +2,7 @@ use crate::spaces::tools::FixedLengthPriorityQueue;
 use crate::types::ScoreType;
 use crate::vector_storage::ScoredPointOffset;
 use num_traits::float::FloatCore;
+use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::iter::FromIterator;
 
@@ -10,7 +11,7 @@ pub struct SearchContext {
     /// Overall nearest points found so far
     pub nearest: FixedLengthPriorityQueue<ScoredPointOffset>,
     /// Current candidates to process
-    pub candidates: BinaryHeap<ScoredPointOffset>,
+    pub candidates: BinaryHeap<Reverse<ScoredPointOffset>>,
 }
 
 impl SearchContext {
@@ -19,7 +20,7 @@ impl SearchContext {
         nearest.push(entry_point);
         SearchContext {
             nearest,
-            candidates: BinaryHeap::from_iter([entry_point]),
+            candidates: BinaryHeap::from_iter([Reverse(entry_point)]),
         }
     }
 
@@ -38,7 +39,7 @@ impl SearchContext {
             Some(removed) => removed.idx != score_point.idx,
         };
         if was_added {
-            self.candidates.push(score_point);
+            self.candidates.push(Reverse(score_point));
         }
     }
 }

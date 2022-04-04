@@ -46,7 +46,6 @@ impl Metric for EuclidMetric {
                 return unsafe { euclid_similarity_neon(v1, v2) };
             }
         }
-
         euclid_similarity(v1, v2)
     }
 
@@ -147,13 +146,11 @@ impl Metric for CosineMetric {
 }
 
 pub fn euclid_similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
-    let s: ScoreType = v1
-        .iter()
+    v1.iter()
         .copied()
         .zip(v2.iter().copied())
         .map(|(a, b)| (a - b).powi(2))
-        .sum();
-    -s.sqrt()
+        .sum()
 }
 
 pub fn cosine_preprocess(vector: &[VectorElementType]) -> Vec<VectorElementType> {
@@ -163,7 +160,8 @@ pub fn cosine_preprocess(vector: &[VectorElementType]) -> Vec<VectorElementType>
 }
 
 pub fn dot_similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
-    v1.iter().zip(v2).map(|(a, b)| a * b).sum()
+    let sum: ScoreType = v1.iter().zip(v2).map(|(a, b)| a * b).sum();
+    1. - sum
 }
 
 #[cfg(test)]
