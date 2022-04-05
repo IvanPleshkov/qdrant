@@ -11,6 +11,29 @@ use super::simple_avx::*;
 #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
 use super::simple_neon::*;
 
+use std::sync::atomic::{AtomicUsize, AtomicBool, Ordering};
+
+static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
+static CALL_ENABLE: AtomicBool = AtomicBool::new(false);
+
+pub fn metrics_counter_enable(enable: bool) {
+    println!("enable_print {}", enable);
+    CALL_ENABLE.store(enable, Ordering::Relaxed);
+}
+
+pub fn metrics_counter_print() {
+    if CALL_ENABLE.load(Ordering::Relaxed) {
+        println!("metrics count {}", CALL_COUNT.load(Ordering::Relaxed));
+        CALL_COUNT.store(0, Ordering::Relaxed);
+    }
+}
+
+pub fn metrics_counter_print_msg(msg: &str) {
+    if CALL_ENABLE.load(Ordering::Relaxed) {
+        println!("{}", msg);
+    }
+}
+
 #[derive(Clone)]
 pub struct DotProductMetric {}
 
@@ -26,6 +49,10 @@ impl Metric for EuclidMetric {
     }
 
     fn similarity(&self, v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
+        if CALL_ENABLE.load(Ordering::Relaxed) {
+            CALL_COUNT.fetch_add(1, Ordering::Relaxed);
+        }
+
         #[cfg(target_arch = "x86_64")]
         {
             if is_x86_feature_detected!("avx") && is_x86_feature_detected!("fma") {
@@ -60,6 +87,10 @@ impl Metric for DotProductMetric {
     }
 
     fn similarity(&self, v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
+        if CALL_ENABLE.load(Ordering::Relaxed) {
+            CALL_COUNT.fetch_add(1, Ordering::Relaxed);
+        }
+
         #[cfg(target_arch = "x86_64")]
         {
             if is_x86_feature_detected!("avx") && is_x86_feature_detected!("fma") {
@@ -95,6 +126,10 @@ impl Metric for CosineMetric {
     }
 
     fn similarity(&self, v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
+        if CALL_ENABLE.load(Ordering::Relaxed) {
+            CALL_COUNT.fetch_add(1, Ordering::Relaxed);
+        }
+
         #[cfg(target_arch = "x86_64")]
         {
             if is_x86_feature_detected!("avx") && is_x86_feature_detected!("fma") {
