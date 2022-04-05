@@ -11,7 +11,7 @@ use super::simple_avx::*;
 #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
 use super::simple_neon::*;
 
-use std::sync::atomic::{AtomicUsize, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
 static CALL_ENABLE: AtomicBool = AtomicBool::new(false);
