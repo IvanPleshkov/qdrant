@@ -55,7 +55,7 @@ pub(crate) unsafe fn euclid_similarity_avx(
     for i in 0..n - m {
         result += (*ptr1.add(i) - *ptr2.add(i)).powi(2);
     }
-    -result.sqrt()
+    result
 }
 
 #[target_feature(enable = "avx")]
@@ -144,7 +144,7 @@ pub(crate) unsafe fn dot_similarity_avx(
     for i in 0..n - m {
         result += (*ptr1.add(i)) * (*ptr2.add(i));
     }
-    result
+    1.0 - result
 }
 
 #[cfg(test)]

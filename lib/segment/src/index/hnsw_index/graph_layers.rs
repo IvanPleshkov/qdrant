@@ -150,7 +150,8 @@ impl GraphLayers {
         points_scorer: &FilteredScorer,
     ) {
         while let Some(candidate) = searcher.candidates.pop() {
-            if candidate.score < searcher.lower_bound() {
+            let candidate = candidate.0;
+            if candidate.score > searcher.lower_bound() {
                 break;
             }
             let mut links_iter = self
@@ -211,9 +212,11 @@ impl GraphLayers {
             let mut changed = true;
             while changed {
                 changed = false;
-                let mut links = self.links(current_point.idx, level).iter().copied();
-                points_scorer.score_iterable_points(&mut links, self.get_m(level), |score_point| {
-                    if score_point.score > current_point.score {
+                let links = self.links(current_point.idx, level);
+                let links_count = links.len();
+                let mut links = links.iter().copied();
+                points_scorer.score_iterable_points(&mut links, links_count, |score_point| {
+                    if score_point.score < current_point.score {
                         changed = true;
                         current_point = score_point;
                     }
@@ -239,7 +242,7 @@ impl GraphLayers {
         let mut id_to_insert = links.len();
         for (i, &item) in links.iter().enumerate() {
             let target_to_link = score_internal(target_point_id, item);
-            if target_to_link < new_to_target {
+            if target_to_link > new_to_target {
                 id_to_insert = i;
                 break;
             }
@@ -256,12 +259,19 @@ impl GraphLayers {
     /// <https://github.com/nmslib/hnswlib/issues/99>
     fn select_candidate_with_heuristic_from_sorted<F>(
         candidates: impl Iterator<Item = ScoredPointOffset>,
+        candidates_count: usize,
         m: usize,
         mut score_internal: F,
     ) -> Vec<PointOffsetType>
     where
         F: FnMut(PointOffsetType, PointOffsetType) -> ScoreType,
     {
+        if candidates_count < m {
+            let mut result: Vec<PointOffsetType> = candidates.map(|x| x.idx).collect();
+            result.reverse();
+            return result;
+        }
+
         let mut result_list = vec![];
         result_list.reserve(m);
         for current_closest in candidates {
@@ -271,7 +281,7 @@ impl GraphLayers {
             let mut is_good = true;
             for &selected_point in &result_list {
                 let dist_to_already_selected = score_internal(current_closest.idx, selected_point);
-                if dist_to_already_selected > current_closest.score {
+                if dist_to_already_selected < current_closest.score {
                     is_good = false;
                     break;
                 }
@@ -280,7 +290,7 @@ impl GraphLayers {
                 result_list.push(current_closest.idx);
             }
         }
-
+        result_list.reverse();
         result_list
     }
 
@@ -293,8 +303,14 @@ impl GraphLayers {
     where
         F: FnMut(PointOffsetType, PointOffsetType) -> ScoreType,
     {
+        let candidates_count = candidates.len();
         let closest_iter = candidates.into_iter();
-        Self::select_candidate_with_heuristic_from_sorted(closest_iter, m, score_internal)
+        Self::select_candidate_with_heuristic_from_sorted(
+            closest_iter,
+            candidates_count,
+            m,
+            score_internal,
+        )
     }
 
     pub fn link_new_point(
@@ -319,7 +335,7 @@ impl GraphLayers {
 
             // Entry point found.
             Some(entry_point) => {
-                let mut level_entry = if entry_point.level > level {
+                let mut level_entry = if level < self.max_level {
                     // The entry point is higher than a new point
                     // Let's find closest one on same level
 
@@ -355,7 +371,7 @@ impl GraphLayers {
 
                     if self.use_heuristic {
                         let selected_nearest =
-                            Self::select_candidates_with_heuristic(nearest_points, level_m, scorer);
+                            Self::select_candidates_with_heuristic(nearest_points, self.m, scorer);
                         self.links_layers[point_id as usize][curr_level]
                             .clone_from(&selected_nearest);
 
@@ -379,9 +395,11 @@ impl GraphLayers {
                                         score: scorer(other_point_link, other_point),
                                     });
                                 }
+                                let candidates_count = candidates.len();
                                 let selected_candidates =
                                     Self::select_candidate_with_heuristic_from_sorted(
-                                        candidates.into_sorted_vec().into_iter().rev(),
+                                        candidates.into_sorted_vec().into_iter(),
+                                        candidates_count,
                                         level_m,
                                         scorer,
                                     );
@@ -522,9 +540,8 @@ mod tests {
         ];
 
         let scorer = |a: PointOffsetType, b: PointOffsetType| {
-            -((points[a as usize][0] - points[b as usize][0]).powi(2)
-                + (points[a as usize][1] - points[b as usize][1]).powi(2))
-            .sqrt()
+            (points[a as usize][0] - points[b as usize][0]).powi(2)
+                + (points[a as usize][1] - points[b as usize][1]).powi(2)
         };
 
         let mut insert_ids = (1..points.len() as PointOffsetType).collect_vec();
@@ -539,7 +556,7 @@ mod tests {
 
         let res = GraphLayers::select_candidates_with_heuristic(candidates, m, scorer);
 
-        assert_eq!(&res, &vec![1, 3, 6]);
+        assert_eq!(&res, &vec![6, 3, 1]);
 
         let mut rng = StdRng::seed_from_u64(42);
 
@@ -804,8 +821,10 @@ mod tests {
             eprintln!("sorted_candidates = ({}, {})", x.idx, x.score);
         }
 
+        let candidates_count = sorted_candidates.len();
         let selected_candidates = GraphLayers::select_candidate_with_heuristic_from_sorted(
             sorted_candidates.into_iter(),
+            candidates_count,
             M,
             |a, b| scorer.score_internal(a, b),
         );
