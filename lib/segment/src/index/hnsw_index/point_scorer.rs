@@ -27,35 +27,39 @@ impl<'a> FilteredScorer<'a> {
 
     pub fn score_iterable_points<F>(
         &self,
-        points_iterator: &mut dyn Iterator<Item = PointOffsetType>,
-        limit: usize,
+        point_ids: &[PointOffsetType],
+        scored_points_buffer: &mut [ScoredPointOffset],
         action: F,
     ) where
         F: FnMut(ScoredPointOffset),
     {
         match self.filter_context {
-            None => self
-                .raw_scorer
-                .score_points(points_iterator)
-                .take(limit)
-                .for_each(action),
+            None => {
+                let count = self
+                    .raw_scorer
+                    .score_points(point_ids, scored_points_buffer);
+                scored_points_buffer
+                    .iter()
+                    .take(count)
+                    .copied()
+                    .for_each(action);
+            }
             Some(f) => {
-                let mut points_filtered_iterator = points_iterator.filter(move |id| f.check(*id));
-                self.raw_scorer
-                    .score_points(&mut points_filtered_iterator)
-                    .take(limit)
+                let filtered_points: Vec<PointOffsetType> = point_ids
+                    .iter()
+                    .copied()
+                    .filter(|id| f.check(*id))
+                    .collect();
+                let count = self
+                    .raw_scorer
+                    .score_points(&filtered_points, scored_points_buffer);
+                scored_points_buffer
+                    .iter()
+                    .take(count)
+                    .copied()
                     .for_each(action);
             }
         };
-    }
-
-    pub fn score_points<F>(&self, ids: &[PointOffsetType], limit: usize, action: F)
-    where
-        F: FnMut(ScoredPointOffset),
-    {
-        let mut points_iterator = ids.iter().copied();
-
-        self.score_iterable_points(&mut points_iterator, limit, action);
     }
 
     pub fn score_point(&self, point_id: PointOffsetType) -> ScoreType {
