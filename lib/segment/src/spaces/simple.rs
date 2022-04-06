@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::types::{Distance, ScoreType, VectorElementType};
 
 use super::metric::Metric;
@@ -25,6 +28,7 @@ impl Metric for EuclidMetric {
         Distance::Euclid
     }
 
+    #[trace]
     fn similarity(&self, v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
         #[cfg(target_arch = "x86_64")]
         {
@@ -60,6 +64,7 @@ impl Metric for DotProductMetric {
         Distance::Dot
     }
 
+    #[trace]
     fn similarity(&self, v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
         #[cfg(target_arch = "x86_64")]
         {
@@ -95,6 +100,7 @@ impl Metric for CosineMetric {
         Distance::Cosine
     }
 
+    #[trace]
     fn similarity(&self, v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
         #[cfg(target_arch = "x86_64")]
         {
@@ -120,6 +126,7 @@ impl Metric for CosineMetric {
         dot_similarity(v1, v2)
     }
 
+    #[trace]
     fn preprocess(&self, vector: &[VectorElementType]) -> Option<Vec<VectorElementType>> {
         #[cfg(target_arch = "x86_64")]
         {
