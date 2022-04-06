@@ -13,6 +13,7 @@ criterion = "0.3"
 
 [dependencies]
 
+tracy-client = { version = "0.12.6", features = ["enable"] }
 parking_lot = "0.12"
 
 rand = "0.8.5"
@@ -37,6 +38,7 @@ tonic = "0.7.0"
 
 segment = {path = "../segment"}
 api = {path = "../api"}
+profiler_proc_macro = {path = "../profiler_proc_macro"}
 
 itertools = "0.10"
 indicatif = "0.16.2"

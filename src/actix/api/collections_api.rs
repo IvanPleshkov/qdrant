@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::actix::helpers::process_response;
 use crate::common::collections::*;
 use actix_web::rt::time::Instant;
@@ -10,6 +13,7 @@ use storage::content_manager::collection_meta_ops::{
 use storage::content_manager::toc::TableOfContent;
 
 #[get("/collections")]
+#[trace]
 async fn get_collections(toc: web::Data<Arc<TableOfContent>>) -> impl Responder {
     let timing = Instant::now();
     let response = Ok(do_list_collections(&toc.into_inner()).await);
@@ -17,6 +21,7 @@ async fn get_collections(toc: web::Data<Arc<TableOfContent>>) -> impl Responder 
 }
 
 #[get("/collections/{name}")]
+#[trace]
 async fn get_collection(
     toc: web::Data<Arc<TableOfContent>>,
     path: web::Path<String>,
@@ -29,6 +34,7 @@ async fn get_collection(
 
 // Deprecated
 #[post("/collections")]
+#[trace]
 async fn update_collections(
     toc: web::Data<Arc<TableOfContent>>,
     operation: web::Json<CollectionMetaOperations>,
@@ -39,6 +45,7 @@ async fn update_collections(
 }
 
 #[put("/collections/{name}")]
+#[trace]
 async fn create_collection(
     toc: web::Data<Arc<TableOfContent>>,
     path: web::Path<String>,
@@ -59,6 +66,7 @@ async fn create_collection(
 }
 
 #[patch("/collections/{name}")]
+#[trace]
 async fn update_collection(
     toc: web::Data<Arc<TableOfContent>>,
     path: web::Path<String>,
@@ -79,6 +87,7 @@ async fn update_collection(
 }
 
 #[delete("/collections/{name}")]
+#[trace]
 async fn delete_collection(
     toc: web::Data<Arc<TableOfContent>>,
     path: web::Path<String>,
@@ -95,6 +104,7 @@ async fn delete_collection(
 }
 
 #[post("/collections/aliases")]
+#[trace]
 async fn update_aliases(
     toc: web::Data<Arc<TableOfContent>>,
     operation: web::Json<ChangeAliasesOperation>,

@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use std::num::NonZeroU32;
 use std::path::Path;
 
@@ -16,10 +19,12 @@ use crate::collection_manager::optimizers::merge_optimizer::MergeOptimizer;
 use crate::collection_manager::optimizers::segment_optimizer::OptimizerThresholds;
 use crate::config::CollectionParams;
 
+#[trace]
 pub fn empty_segment(path: &Path) -> Segment {
     build_simple_segment(path, 4, Distance::Dot).unwrap()
 }
 
+#[trace]
 pub fn random_segment(path: &Path, opnum: SeqNumberType, num_vectors: u64, dim: usize) -> Segment {
     let mut segment = build_simple_segment(path, dim, Distance::Dot).unwrap();
     let mut rnd = rand::thread_rng();
@@ -37,6 +42,7 @@ pub fn random_segment(path: &Path, opnum: SeqNumberType, num_vectors: u64, dim: 
     segment
 }
 
+#[trace]
 pub fn build_segment_1(path: &Path) -> Segment {
     let mut segment1 = empty_segment(path);
 
@@ -68,6 +74,7 @@ pub fn build_segment_1(path: &Path) -> Segment {
     segment1
 }
 
+#[trace]
 pub fn build_segment_2(path: &Path) -> Segment {
     let mut segment2 = empty_segment(path);
 
@@ -92,6 +99,7 @@ pub fn build_segment_2(path: &Path) -> Segment {
     segment2
 }
 
+#[trace]
 pub fn build_test_holder(path: &Path) -> RwLock<SegmentHolder> {
     let segment1 = build_segment_1(path);
     let segment2 = build_segment_2(path);

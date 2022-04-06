@@ -21,6 +21,7 @@ rusty-hook = "^0.11.2"
 
 [dependencies]
 
+tracy-client = { version = "0.12.6", features = ["enable"] }
 parking_lot = { version = "0.12", features=["deadlock_detection"], optional = true }
 
 num_cpus = "1.13"
@@ -50,6 +51,7 @@ segment = { path = "lib/segment" }
 collection = { path = "lib/collection" }
 storage = { path = "lib/storage" }
 api = { path = "lib/api" }
+profiler_proc_macro = {path = "lib/profiler_proc_macro"}
 
 [[bin]]
 name = "schema_generator"

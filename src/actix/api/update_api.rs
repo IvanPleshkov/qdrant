@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::actix::helpers::process_response;
 use crate::common::points::{
     do_clear_payload, do_create_index, do_delete_index, do_delete_payload, do_delete_points,
@@ -21,6 +24,7 @@ pub struct UpdateParam {
 
 // Deprecated
 #[post("/collections/{name}")]
+#[trace]
 pub async fn update_points(
     toc: web::Data<Arc<TableOfContent>>,
     path: web::Path<String>,

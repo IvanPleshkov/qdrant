@@ -12,7 +12,7 @@ consensus = ["raft", "prost", "serde_cbor"]
 tempdir = "0.3.7"
 
 [dependencies]
-
+tracy-client = { version = "0.12.6", features = ["enable"] }
 num_cpus = "1.13"
 thiserror = "1.0"
 rand = "0.8.5"
@@ -32,3 +32,4 @@ tonic = "0.7.0"
 segment = {path = "../segment"}
 collection = {path = "../collection"}
 api = {path = "../api"}
+profiler_proc_macro = {path = "../profiler_proc_macro"}

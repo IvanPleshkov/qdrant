@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::index::field_index::geo_index::PersistedGeoMapIndex;
 use crate::index::field_index::map_index::PersistedMapIndex;
 use crate::index::field_index::numeric_index::PersistedNumericIndex;
@@ -72,6 +75,7 @@ pub enum FieldIndex {
 }
 
 impl FieldIndex {
+    #[trace]
     pub fn get_payload_field_index(&self) -> &dyn PayloadFieldIndex {
         match self {
             FieldIndex::IntIndex(payload_field_index) => payload_field_index,
@@ -84,6 +88,7 @@ impl FieldIndex {
 }
 
 impl PayloadFieldIndex for FieldIndex {
+    #[trace]
     fn filter(
         &self,
         condition: &FieldCondition,
@@ -91,11 +96,13 @@ impl PayloadFieldIndex for FieldIndex {
         self.get_payload_field_index().filter(condition)
     }
 
+    #[trace]
     fn estimate_cardinality(&self, condition: &FieldCondition) -> Option<CardinalityEstimation> {
         self.get_payload_field_index()
             .estimate_cardinality(condition)
     }
 
+    #[trace]
     fn payload_blocks(
         &self,
         threshold: usize,

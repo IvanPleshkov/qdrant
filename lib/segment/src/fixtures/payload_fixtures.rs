@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::types::{Condition, FieldCondition, Filter, Range as RangeCondition, VectorElementType};
 use itertools::Itertools;
 use rand::prelude::ThreadRng;
@@ -39,22 +42,26 @@ const INT_RANGE: Range<i64> = 0..500;
 pub const LON_RANGE: Range<f64> = -180.0..180.0;
 pub const LAT_RANGE: Range<f64> = -90.0..90.0;
 
+#[trace]
 pub fn random_keyword(rnd_gen: &mut ThreadRng) -> String {
     let random_adj = ADJECTIVE.choose(rnd_gen).unwrap();
     let random_noun = NOUN.choose(rnd_gen).unwrap();
     format!("{} {}", random_adj, random_noun)
 }
 
+#[trace]
 pub fn random_keyword_payload(rnd_gen: &mut ThreadRng) -> String {
     random_keyword(rnd_gen)
 }
 
+#[trace]
 pub fn random_int_payload(rnd_gen: &mut ThreadRng, num_values: usize) -> Vec<i64> {
     (0..num_values)
         .map(|_| rnd_gen.gen_range(INT_RANGE))
         .collect_vec()
 }
 
+#[trace]
 pub fn random_geo_payload<R: Rng + ?Sized>(rnd_gen: &mut R, num_values: usize) -> Vec<Value> {
     (0..num_values)
         .map(|_| {
@@ -66,10 +73,12 @@ pub fn random_geo_payload<R: Rng + ?Sized>(rnd_gen: &mut R, num_values: usize) -
         .collect_vec()
 }
 
+#[trace]
 pub fn random_vector(rnd_gen: &mut ThreadRng, size: usize) -> Vec<VectorElementType> {
     (0..size).map(|_| rnd_gen.gen()).collect()
 }
 
+#[trace]
 pub fn random_field_condition(rnd_gen: &mut ThreadRng) -> Condition {
     let kv_or_int: bool = rnd_gen.gen();
     if kv_or_int {
@@ -90,6 +99,7 @@ pub fn random_field_condition(rnd_gen: &mut ThreadRng) -> Condition {
     }
 }
 
+#[trace]
 pub fn random_filter(rnd_gen: &mut ThreadRng) -> Filter {
     let mut rnd1 = rand::thread_rng();
 

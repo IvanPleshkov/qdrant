@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::common::error_logging::LogError;
 use crate::entry::entry_point::{OperationError, OperationResult, SegmentEntry};
 use crate::segment::Segment;
@@ -18,6 +21,7 @@ pub struct SegmentBuilder {
 }
 
 impl SegmentBuilder {
+    #[trace]
     pub fn new(
         segment_path: &Path,
         temp_dir: &Path,
@@ -47,6 +51,7 @@ impl SegmentBuilder {
     ///
     /// * `bool` - if `true` - data successfully added, if `false` - process was interrupted
     ///
+    #[trace]
     pub fn update_from(&mut self, other: &Segment, stopped: &AtomicBool) -> OperationResult<bool> {
         match &mut self.segment {
             None => Err(OperationError::service_error(
@@ -117,6 +122,7 @@ impl SegmentBuilder {
         }
     }
 
+    #[trace]
     pub fn build(mut self, stopped: &AtomicBool) -> Result<Segment, OperationError> {
         {
             let mut segment = self.segment.ok_or_else(|| {

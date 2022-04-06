@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use std::collections::HashMap;
 use std::fs::{create_dir_all, read_dir, remove_dir_all};
 use std::num::NonZeroU32;
@@ -77,6 +80,7 @@ pub struct TableOfContent {
 }
 
 impl TableOfContent {
+    #[trace]
     pub fn new(storage_config: &StorageConfig, search_runtime: Runtime) -> Self {
         let collections_path = Path::new(&storage_config.storage_path).join(&COLLECTIONS_DIR);
         let collection_management_runtime = Runtime::new().unwrap();
@@ -144,12 +148,14 @@ impl TableOfContent {
         self.propose_sender = Some(std::sync::Mutex::new(sender))
     }
 
+    #[trace]
     fn get_collection_path(&self, collection_name: &str) -> PathBuf {
         Path::new(&self.storage_config.storage_path)
             .join(&COLLECTIONS_DIR)
             .join(collection_name)
     }
 
+    #[trace]
     fn create_collection_path(&self, collection_name: &str) -> Result<PathBuf, StorageError> {
         let path = self.get_collection_path(collection_name);
 

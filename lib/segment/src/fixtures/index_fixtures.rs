@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::payload_storage::{ConditionChecker, FilterContext};
 use crate::spaces::metric::Metric;
 use crate::types::{Filter, PointOffsetType, VectorElementType};
@@ -6,6 +9,7 @@ use bit_vec::BitVec;
 use itertools::Itertools;
 use rand::Rng;
 
+#[trace]
 pub fn random_vector<R: Rng + ?Sized>(rnd_gen: &mut R, size: usize) -> Vec<VectorElementType> {
     (0..size).map(|_| rnd_gen.gen_range(0.0..1.0)).collect()
 }
@@ -36,6 +40,7 @@ impl<TMetric> TestRawScorerProducer<TMetric>
 where
     TMetric: Metric,
 {
+    #[trace]
     pub fn new<R>(dim: usize, num_vectors: usize, metric: TMetric, rng: &mut R) -> Self
     where
         R: Rng + ?Sized,
@@ -54,6 +59,7 @@ where
         }
     }
 
+    #[trace]
     pub fn get_raw_scorer(&self, query: Vec<VectorElementType>) -> SimpleRawScorer<TMetric> {
         SimpleRawScorer {
             query: self.metric.preprocess(&query).unwrap_or(query),

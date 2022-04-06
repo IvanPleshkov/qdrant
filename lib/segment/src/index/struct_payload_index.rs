@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use std::collections::{HashMap, HashSet};
 use std::fs::{create_dir_all, remove_file, File};
 use std::path::{Path, PathBuf};
@@ -43,6 +46,7 @@ pub struct StructPayloadIndex {
 }
 
 impl StructPayloadIndex {
+    #[trace]
     pub fn estimate_field_condition(
         &self,
         condition: &FieldCondition,
@@ -59,6 +63,7 @@ impl StructPayloadIndex {
         })
     }
 
+    #[trace]
     fn query_field(
         &self,
         field_condition: &FieldCondition,
@@ -80,19 +85,23 @@ impl StructPayloadIndex {
         PayloadConfig::get_config_path(&self.path)
     }
 
+    #[trace]
     fn save_config(&self) -> OperationResult<()> {
         let config_path = self.config_path();
         self.config.save(&config_path)
     }
 
+    #[trace]
     fn get_field_index_dir(path: &Path) -> PathBuf {
         path.join(PAYLOAD_FIELD_INDEX_PATH)
     }
 
+    #[trace]
     fn get_field_index_path(path: &Path, field: PayloadKeyTypeRef) -> PathBuf {
         Self::get_field_index_dir(path).join(format!("{}.idx", field))
     }
 
+    #[trace]
     fn save_field_index(&self, field: PayloadKeyTypeRef) -> OperationResult<()> {
         let field_index_dir = Self::get_field_index_dir(&self.path);
         let field_index_path = Self::get_field_index_path(&self.path, field);
@@ -110,6 +119,7 @@ impl StructPayloadIndex {
         Ok(())
     }
 
+    #[trace]
     fn load_or_build_field_index(
         &self,
         field: PayloadKeyTypeRef,
@@ -140,6 +150,7 @@ impl StructPayloadIndex {
         }
     }
 
+    #[trace]
     fn load_all_fields(&mut self) -> OperationResult<()> {
         let mut field_indexes: IndexesMap = Default::default();
         for (field, payload_type) in &self.config.indexed_fields {
@@ -150,6 +161,7 @@ impl StructPayloadIndex {
         Ok(())
     }
 
+    #[trace]
     pub fn open(
         condition_checker: Arc<ConditionCheckerSS>,
         vector_storage: Arc<AtomicRefCell<VectorStorageSS>>,
@@ -186,6 +198,7 @@ impl StructPayloadIndex {
         Ok(index)
     }
 
+    #[trace]
     pub fn build_field_index(
         &self,
         field: PayloadKeyTypeRef,
@@ -212,6 +225,7 @@ impl StructPayloadIndex {
         Ok(field_indexes)
     }
 
+    #[trace]
     fn build_and_save(
         &mut self,
         field: PayloadKeyTypeRef,
@@ -225,16 +239,19 @@ impl StructPayloadIndex {
         Ok(())
     }
 
+    #[trace]
     pub fn total_points(&self) -> usize {
         self.vector_storage.borrow().vector_count()
     }
 }
 
 impl PayloadIndex for StructPayloadIndex {
+    #[trace]
     fn indexed_fields(&self) -> HashMap<PayloadKeyType, PayloadSchemaType> {
         self.config.indexed_fields.clone()
     }
 
+    #[trace]
     fn set_indexed(
         &mut self,
         field: PayloadKeyTypeRef,
@@ -253,6 +270,7 @@ impl PayloadIndex for StructPayloadIndex {
         Ok(())
     }
 
+    #[trace]
     fn drop_index(&mut self, field: PayloadKeyTypeRef) -> OperationResult<()> {
         self.config.indexed_fields.remove(field);
         self.save_config()?;
@@ -267,6 +285,7 @@ impl PayloadIndex for StructPayloadIndex {
         Ok(())
     }
 
+    #[trace]
     fn estimate_cardinality(&self, query: &Filter) -> CardinalityEstimation {
         let total_points = self.total_points();
 
@@ -322,6 +341,7 @@ impl PayloadIndex for StructPayloadIndex {
         estimate_filter(&estimator, query, total_points)
     }
 
+    #[trace]
     fn query_points<'a>(
         &'a self,
         query: &'a Filter,
@@ -371,6 +391,7 @@ impl PayloadIndex for StructPayloadIndex {
         };
     }
 
+    #[trace]
     fn filter_context<'a>(&'a self, filter: &'a Filter) -> Box<dyn FilterContext + 'a> {
         Box::new(StructFilterContext {
             filter,
@@ -378,6 +399,7 @@ impl PayloadIndex for StructPayloadIndex {
         })
     }
 
+    #[trace]
     fn payload_blocks(
         &self,
         field: PayloadKeyTypeRef,

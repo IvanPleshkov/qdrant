@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -40,6 +43,7 @@ impl IndexingOptimizer {
         }
     }
 
+    #[trace]
     fn worst_segment(
         &self,
         segments: LockedSegmentHolder,

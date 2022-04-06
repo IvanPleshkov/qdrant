@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use collection::operations::config_diff::{HnswConfigDiff, OptimizersConfigDiff, WalConfigDiff};
 #[cfg(feature = "consensus")]
 use raft::eraftpb::Entry as RaftEntry;
@@ -62,18 +65,21 @@ pub enum AliasOperations {
 }
 
 impl From<CreateAlias> for AliasOperations {
+    #[trace]
     fn from(create_alias: CreateAlias) -> Self {
         AliasOperations::CreateAlias(CreateAliasOperation { create_alias })
     }
 }
 
 impl From<DeleteAlias> for AliasOperations {
+    #[trace]
     fn from(delete_alias: DeleteAlias) -> Self {
         AliasOperations::DeleteAlias(DeleteAliasOperation { delete_alias })
     }
 }
 
 impl From<RenameAlias> for AliasOperations {
+    #[trace]
     fn from(rename_alias: RenameAlias) -> Self {
         AliasOperations::RenameAlias(RenameAliasOperation { rename_alias })
     }
