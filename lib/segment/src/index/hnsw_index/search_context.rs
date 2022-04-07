@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::spaces::tools::FixedLengthPriorityQueue;
 use crate::types::ScoreType;
 use crate::vector_storage::ScoredPointOffset;
@@ -32,6 +35,7 @@ impl SearchContext {
 
     /// Updates search context with new scored point.
     /// If it is closer than existing - also add it to candidates for further search
+    #[trace]
     pub fn process_candidate(&mut self, score_point: ScoredPointOffset) {
         let was_added = match self.nearest.push(score_point) {
             None => true,
