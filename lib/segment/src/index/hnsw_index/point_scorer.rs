@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::payload_storage::FilterContext;
 use crate::types::{PointOffsetType, ScoreType};
 use crate::vector_storage::{RawScorer, ScoredPointOffset};
@@ -9,6 +12,7 @@ pub struct FilteredScorer<'a> {
 }
 
 impl<'a> FilteredScorer<'a> {
+    #[trace]
     pub fn new(
         raw_scorer: &'a dyn RawScorer,
         filter_context: Option<&'a dyn FilterContext>,
@@ -37,6 +41,7 @@ impl<'a> FilteredScorer<'a> {
     /// * `point_ids` - list of points to score. *Warn*: This input will be wrecked during the execution.
     /// * `limit` - limits the number of points to process after filtering.
     ///
+    #[trace]
     pub fn score_points(
         &mut self,
         point_ids: &mut [PointOffsetType],

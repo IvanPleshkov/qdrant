@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::payload_storage::FilterContext;
 use crate::spaces::metric::Metric;
 use crate::types::{PointOffsetType, VectorElementType};
@@ -7,6 +10,7 @@ use bit_vec::BitVec;
 use rand::Rng;
 use std::marker::PhantomData;
 
+#[trace]
 pub fn random_vector<R: Rng + ?Sized>(rnd_gen: &mut R, size: usize) -> Vec<VectorElementType> {
     (0..size).map(|_| rnd_gen.gen_range(0.0..1.0)).collect()
 }
@@ -29,6 +33,7 @@ impl<TMetric> TestRawScorerProducer<TMetric>
 where
     TMetric: Metric,
 {
+    #[trace]
     pub fn new<R>(dim: usize, num_vectors: usize, rng: &mut R) -> Self
     where
         R: Rng + ?Sized,
@@ -47,6 +52,7 @@ where
         }
     }
 
+    #[trace]
     pub fn get_raw_scorer(&self, query: Vec<VectorElementType>) -> SimpleRawScorer<TMetric> {
         SimpleRawScorer::<TMetric> {
             query: TMetric::preprocess(&query).unwrap_or(query),

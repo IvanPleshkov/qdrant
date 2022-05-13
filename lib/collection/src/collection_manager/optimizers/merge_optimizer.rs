@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::collection_manager::holders::segment_holder::{
     LockedSegment, LockedSegmentHolder, SegmentId,
 };
@@ -68,6 +71,7 @@ impl SegmentOptimizer for MergeOptimizer {
         &self.thresholds_config
     }
 
+    #[trace]
     fn check_condition(
         &self,
         segments: LockedSegmentHolder,

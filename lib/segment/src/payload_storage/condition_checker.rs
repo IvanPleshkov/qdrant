@@ -1,4 +1,6 @@
 //! Contains functions for interpreting filter queries and defining if given points pass the conditions
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
 
 use crate::types::{
     GeoBoundingBox, GeoRadius, Match, MatchValue, Range, ValueVariants, ValuesCount,
@@ -17,6 +19,7 @@ pub trait ValueChecker {
 }
 
 impl ValueChecker for Match {
+    #[trace]
     fn check_match(&self, payload: &Value) -> bool {
         match self {
             Match::Value(MatchValue { value }) => match (payload, value) {
@@ -33,6 +36,7 @@ impl ValueChecker for Match {
 }
 
 impl ValueChecker for Range {
+    #[trace]
     fn check_match(&self, payload: &Value) -> bool {
         match payload {
             Value::Number(num) => num
@@ -45,6 +49,7 @@ impl ValueChecker for Range {
 }
 
 impl ValueChecker for GeoBoundingBox {
+    #[trace]
     fn check_match(&self, payload: &Value) -> bool {
         match payload {
             Value::Object(obj) => {
@@ -62,6 +67,7 @@ impl ValueChecker for GeoBoundingBox {
 }
 
 impl ValueChecker for GeoRadius {
+    #[trace]
     fn check_match(&self, payload: &Value) -> bool {
         match payload {
             Value::Object(obj) => {

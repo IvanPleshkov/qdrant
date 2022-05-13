@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use std::marker::PhantomData;
 use std::ops::Range;
 
@@ -47,6 +50,7 @@ impl<TMetric> RawScorer for SimpleRawScorer<'_, TMetric>
 where
     TMetric: Metric,
 {
+    #[trace]
     fn score_points(&self, points: &[PointOffsetType], scores: &mut [ScoredPointOffset]) -> usize {
         let mut size: usize = 0;
         for point_id in points.iter().copied() {
@@ -67,15 +71,18 @@ where
         size
     }
 
+    #[trace]
     fn check_point(&self, point: PointOffsetType) -> bool {
         (point as usize) < self.vectors.len() && !self.deleted[point as usize]
     }
 
+    #[trace]
     fn score_point(&self, point: PointOffsetType) -> ScoreType {
         let other_vector = self.vectors.get(point);
         TMetric::similarity(&self.query, other_vector)
     }
 
+    #[trace]
     fn score_internal(&self, point_a: PointOffsetType, point_b: PointOffsetType) -> ScoreType {
         let vector_a = self.vectors.get(point_a);
         let vector_b = self.vectors.get(point_b);
@@ -83,6 +90,7 @@ where
     }
 }
 
+#[trace]
 pub fn open_simple_vector_storage(
     store: Arc<AtomicRefCell<DB>>,
     dim: usize,
@@ -155,6 +163,7 @@ impl<TMetric> SimpleVectorStorage<TMetric>
 where
     TMetric: Metric,
 {
+    #[trace]
     fn update_stored(&self, point_id: PointOffsetType) -> OperationResult<()> {
         let v = self.vectors.get(point_id);
 
@@ -196,6 +205,7 @@ where
         self.vectors.len()
     }
 
+    #[trace]
     fn get_vector(&self, key: PointOffsetType) -> Option<Vec<VectorElementType>> {
         if self.deleted.get(key as usize).unwrap_or(true) {
             return None;
@@ -203,6 +213,7 @@ where
         Some(self.vectors.get(key).to_vec())
     }
 
+    #[trace]
     fn put_vector(&mut self, vector: Vec<VectorElementType>) -> OperationResult<PointOffsetType> {
         assert_eq!(self.dim, vector.len());
         let new_id = self.vectors.push(&vector);
@@ -211,6 +222,7 @@ where
         Ok(new_id)
     }
 
+    #[trace]
     fn update_vector(
         &mut self,
         key: PointOffsetType,
@@ -221,6 +233,7 @@ where
         Ok(key)
     }
 
+    #[trace]
     fn update_from(&mut self, other: &VectorStorageSS) -> OperationResult<Range<PointOffsetType>> {
         let start_index = self.vectors.len() as PointOffsetType;
         for point_id in other.iter_ids() {
@@ -234,6 +247,7 @@ where
         Ok(start_index..end_index)
     }
 
+    #[trace]
     fn delete(&mut self, key: PointOffsetType) -> OperationResult<()> {
         if (key as usize) >= self.deleted.len() {
             return Ok(());
@@ -246,22 +260,26 @@ where
         Ok(())
     }
 
+    #[trace]
     fn is_deleted(&self, key: PointOffsetType) -> bool {
         self.deleted[key as usize]
     }
 
+    #[trace]
     fn iter_ids(&self) -> Box<dyn Iterator<Item = PointOffsetType> + '_> {
         let iter = (0..self.vectors.len() as PointOffsetType)
             .filter(move |id| !self.deleted[*id as usize]);
         Box::new(iter)
     }
 
+    #[trace]
     fn flush(&self) -> OperationResult<()> {
         let store_ref = self.store.borrow();
         let cf_handle = store_ref.cf_handle(DB_VECTOR_CF).unwrap();
         Ok(store_ref.flush_cf(cf_handle)?)
     }
 
+    #[trace]
     fn raw_scorer(&self, vector: Vec<VectorElementType>) -> Box<dyn RawScorer + '_> {
         Box::new(SimpleRawScorer::<TMetric> {
             query: TMetric::preprocess(&vector).unwrap_or(vector),
@@ -271,6 +289,7 @@ where
         })
     }
 
+    #[trace]
     fn raw_scorer_internal(&self, point_id: PointOffsetType) -> Box<dyn RawScorer + '_> {
         Box::new(SimpleRawScorer::<TMetric> {
             query: self.vectors.get(point_id).to_vec(),
@@ -280,6 +299,7 @@ where
         })
     }
 
+    #[trace]
     fn score_points(
         &self,
         vector: &[VectorElementType],
@@ -299,6 +319,7 @@ where
         peek_top_largest_scores_iterable(scores, top)
     }
 
+    #[trace]
     fn score_all(&self, vector: &[VectorElementType], top: usize) -> Vec<ScoredPointOffset> {
         let preprocessed_vector = TMetric::preprocess(vector).unwrap_or_else(|| vector.to_owned());
 
@@ -315,6 +336,7 @@ where
         peek_top_largest_scores_iterable(scores, top)
     }
 
+    #[trace]
     fn score_internal(
         &self,
         point: PointOffsetType,

@@ -19,6 +19,11 @@ use storage::content_manager::toc::{ConsensusEnabled, TableOfContent};
 use crate::common::helpers::create_search_runtime;
 use crate::settings::Settings;
 
+#[cfg(feature = "tracy")]
+#[global_allocator]
+static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
+    tracy_client::ProfiledAllocator::new(std::alloc::System, 100);
+
 /// Qdrant (read: quadrant ) is a vector similarity search engine.
 /// It provides a production-ready service with a convenient API to store, search, and manage points - vectors with an additional payload.
 ///

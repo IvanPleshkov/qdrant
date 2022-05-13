@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::common::rocksdb_operations::{db_write_options, DB_PAYLOAD_CF};
 use crate::types::{Payload, PointOffsetType};
 use atomic_refcell::AtomicRefCell;
@@ -16,6 +19,7 @@ pub struct SimplePayloadStorage {
 }
 
 impl SimplePayloadStorage {
+    #[trace]
     pub fn open(store: Arc<AtomicRefCell<DB>>) -> OperationResult<Self> {
         let mut payload_map: HashMap<PointOffsetType, Payload> = Default::default();
 
@@ -35,6 +39,7 @@ impl SimplePayloadStorage {
         })
     }
 
+    #[trace]
     pub(crate) fn update_storage(&self, point_id: &PointOffsetType) -> OperationResult<()> {
         let store_ref = self.store.borrow();
         let cf_handle = store_ref.cf_handle(DB_PAYLOAD_CF).unwrap();

@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::collection_manager::optimizers::indexing_optimizer::IndexingOptimizer;
 use crate::collection_manager::optimizers::merge_optimizer::MergeOptimizer;
 use crate::collection_manager::optimizers::segment_optimizer::OptimizerThresholds;
@@ -45,6 +48,7 @@ pub struct OptimizersConfig {
     pub max_optimization_threads: usize,
 }
 
+#[trace]
 pub fn build_optimizers(
     shard_path: &Path,
     collection_params: &CollectionParams,

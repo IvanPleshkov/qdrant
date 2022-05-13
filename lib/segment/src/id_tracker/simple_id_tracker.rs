@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::common::rocksdb_operations::{db_write_options, DB_MAPPING_CF, DB_VERSIONS_CF};
 use crate::entry::entry_point::OperationResult;
 use crate::id_tracker::points_iterator::PointsIterator;
@@ -58,6 +61,7 @@ pub struct SimpleIdTracker {
 }
 
 impl SimpleIdTracker {
+    #[trace]
     pub fn open(store: Arc<AtomicRefCell<DB>>) -> OperationResult<Self> {
         let mut internal_to_external: HashMap<PointOffsetType, PointIdType> = Default::default();
         let mut external_to_internal: BTreeMap<PointIdType, PointOffsetType> = Default::default();
@@ -111,6 +115,7 @@ impl IdTracker for SimpleIdTracker {
         self.external_to_version.get(&external_id).copied()
     }
 
+    #[trace]
     fn set_version(
         &mut self,
         external_id: PointIdType,
@@ -135,6 +140,7 @@ impl IdTracker for SimpleIdTracker {
         self.internal_to_external.get(&internal_id).copied()
     }
 
+    #[trace]
     fn set_link(
         &mut self,
         external_id: PointIdType,
@@ -154,6 +160,7 @@ impl IdTracker for SimpleIdTracker {
         Ok(())
     }
 
+    #[trace]
     fn drop(&mut self, external_id: PointIdType) -> OperationResult<()> {
         self.external_to_version.remove(&external_id);
 
@@ -182,6 +189,7 @@ impl IdTracker for SimpleIdTracker {
         Box::new(self.internal_to_external.keys().copied())
     }
 
+    #[trace]
     fn iter_from(
         &self,
         external_id: Option<PointIdType>,
@@ -194,6 +202,7 @@ impl IdTracker for SimpleIdTracker {
         Box::new(range.map(|(key, value)| (*key, *value)))
     }
 
+    #[trace]
     fn flush(&self) -> OperationResult<()> {
         let store_ref = self.store.borrow();
         store_ref.flush_cf(store_ref.cf_handle(DB_MAPPING_CF).unwrap())?;

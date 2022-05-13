@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -61,6 +64,7 @@ pub trait SegmentOptimizer {
     ) -> Vec<SegmentId>;
 
     /// Build temp segment
+    #[trace]
     fn temp_segment(&self) -> CollectionResult<LockedSegment> {
         let collection_params = self.collection_params();
         let config = SegmentConfig {
@@ -78,6 +82,7 @@ pub trait SegmentOptimizer {
     }
 
     /// Build optimized segment
+    #[trace]
     fn optimized_segment_builder(
         &self,
         optimizing_segments: &[LockedSegment],
@@ -141,6 +146,7 @@ pub trait SegmentOptimizer {
     /// Original segments are pushed into `segments`, proxies removed.
     /// Returns IDs on restored segments
     ///
+    #[trace]
     fn unwrap_proxy(
         &self,
         segments: &LockedSegmentHolder,

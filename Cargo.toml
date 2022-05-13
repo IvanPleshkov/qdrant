@@ -11,6 +11,7 @@ doctest = false
 default = [ "web" ]
 web = ["actix-web"]
 service_debug = ["parking_lot", "parking_lot/deadlock_detection"]
+tracy = ["tracy-client", "collection/tracy", "profiler_proc_macro/tracy", "segment/tracy", "storage/tracy" ]
 
 [dev-dependencies]
 tempdir = "0.3.7"
@@ -19,6 +20,7 @@ rusty-hook = "^0.11.2"
 
 [dependencies]
 
+tracy-client = { version = "0.12.7", features = ["enable"], optional = true }
 parking_lot = { version = "0.12", features=["deadlock_detection"], optional = true }
 
 num_cpus = "1.13"
@@ -53,6 +55,7 @@ segment = { path = "lib/segment" }
 collection = { path = "lib/collection" }
 storage = { path = "lib/storage" }
 api = { path = "lib/api" }
+profiler_proc_macro = {path = "lib/profiler_proc_macro"}
 
 [[bin]]
 name = "schema_generator"

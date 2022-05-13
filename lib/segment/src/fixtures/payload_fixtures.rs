@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::types::{
     Condition, ExtendedPointId, FieldCondition, Filter, HasIdCondition, IsEmptyCondition, Payload,
     PayloadField, Range as RangeCondition, ValuesCount, VectorElementType,
@@ -47,12 +50,14 @@ pub const FLT_KEY: &str = "flt";
 pub const FLICKING_KEY: &str = "flicking";
 pub const GEO_KEY: &str = "geo";
 
+#[trace]
 pub fn random_keyword<R: Rng + ?Sized>(rnd_gen: &mut R) -> String {
     let random_adj = ADJECTIVE.choose(rnd_gen).unwrap();
     let random_noun = NOUN.choose(rnd_gen).unwrap();
     format!("{} {}", random_adj, random_noun)
 }
 
+#[trace]
 pub fn random_keyword_payload<R: Rng + ?Sized>(
     rnd_gen: &mut R,
     num_values: RangeInclusive<usize>,
@@ -92,10 +97,12 @@ pub fn random_geo_payload<R: Rng + ?Sized>(
         .collect_vec()
 }
 
+#[trace]
 pub fn random_vector<R: Rng + ?Sized>(rnd_gen: &mut R, size: usize) -> Vec<VectorElementType> {
     (0..size).map(|_| rnd_gen.gen()).collect()
 }
 
+#[trace]
 pub fn random_uncommon_condition<R: Rng + ?Sized>(rnd_gen: &mut R) -> Condition {
     let switch = rnd_gen.gen_range(0..=3);
     match switch {
@@ -203,6 +210,7 @@ pub fn random_filter<R: Rng + ?Sized>(rnd_gen: &mut R, total_conditions: usize) 
     }
 }
 
+#[trace]
 pub fn generate_diverse_payload<R: Rng + ?Sized>(rnd_gen: &mut R) -> Payload {
     let payload: Payload = if rnd_gen.gen_range(0.0..1.0) < 0.5 {
         json!({

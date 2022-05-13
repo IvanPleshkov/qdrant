@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use std::cmp::Ordering::{Greater, Less};
 use std::cmp::{max, min};
 use std::mem;
@@ -35,10 +38,12 @@ pub struct PersistedNumericIndex<N: ToPrimitive + Clone> {
 }
 
 impl<N: ToPrimitive + Clone> PersistedNumericIndex<N> {
+    #[trace]
     pub fn get_values(&self, idx: PointOffsetType) -> Option<&Vec<N>> {
         self.point_to_values.get(idx as usize)
     }
 
+    #[trace]
     pub fn check_value(&self, idx: PointOffsetType, range: &Range) -> bool {
         self.get_values(idx)
             .map(|values| {
@@ -49,6 +54,7 @@ impl<N: ToPrimitive + Clone> PersistedNumericIndex<N> {
             .unwrap_or(false)
     }
 
+    #[trace]
     fn search_range(&self, range: &Range) -> (usize, usize) {
         let mut lower_index = 0;
         let mut upper_index = self.elements.len();
@@ -119,6 +125,7 @@ impl<N: ToPrimitive + Clone> PersistedNumericIndex<N> {
         }
     }
 
+    #[trace]
     pub fn range_cardinality(&self, range: &Range) -> CardinalityEstimation {
         let (lower_index, upper_index) = self.search_range(range);
 
@@ -162,6 +169,7 @@ impl<N: ToPrimitive + Clone> PersistedNumericIndex<N> {
         }
     }
 
+    #[trace]
     fn add_many_to_list(&mut self, idx: PointOffsetType, values: impl IntoIterator<Item = N>) {
         let mut total_values = 0;
         if self.point_to_values.len() <= idx as usize {
@@ -181,6 +189,7 @@ impl<N: ToPrimitive + Clone> PersistedNumericIndex<N> {
         }
     }
 
+    #[trace]
     fn condition_iter(&self, range: &Range) -> Box<dyn Iterator<Item = PointOffsetType> + '_> {
         let (lower_index, upper_index) = self.search_range(range);
         Box::new(
@@ -193,6 +202,7 @@ impl<N: ToPrimitive + Clone> PersistedNumericIndex<N> {
 }
 
 impl<N: ToPrimitive + Clone> PayloadFieldIndex for PersistedNumericIndex<N> {
+    #[trace]
     fn filter(
         &self,
         condition: &FieldCondition,
@@ -203,6 +213,7 @@ impl<N: ToPrimitive + Clone> PayloadFieldIndex for PersistedNumericIndex<N> {
             .map(|range| self.condition_iter(range))
     }
 
+    #[trace]
     fn estimate_cardinality(&self, condition: &FieldCondition) -> Option<CardinalityEstimation> {
         condition.range.as_ref().map(|range| {
             let mut cardinality = self.range_cardinality(range);
@@ -213,6 +224,7 @@ impl<N: ToPrimitive + Clone> PayloadFieldIndex for PersistedNumericIndex<N> {
         })
     }
 
+    #[trace]
     fn payload_blocks(
         &self,
         threshold: usize,
@@ -277,6 +289,7 @@ impl PayloadFieldIndexBuilder for PersistedNumericIndex<FloatPayloadType> {
         self.add_point(id, value)
     }
 
+    #[trace]
     fn build(&mut self) -> FieldIndex {
         let mut elements = mem::take(&mut self.elements);
         let point_to_values = mem::take(&mut self.point_to_values);
@@ -308,6 +321,7 @@ impl PayloadFieldIndexBuilder for PersistedNumericIndex<IntPayloadType> {
         self.add_point(id, value)
     }
 
+    #[trace]
     fn build(&mut self) -> FieldIndex {
         let mut elements = mem::take(&mut self.elements);
         let point_to_values = mem::take(&mut self.point_to_values);

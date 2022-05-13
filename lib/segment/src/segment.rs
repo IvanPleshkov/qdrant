@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::entry::entry_point::OperationError::ServiceError;
 use crate::entry::entry_point::{
     get_service_error, OperationError, OperationResult, SegmentEntry, SegmentFailedState,
@@ -55,6 +58,7 @@ pub struct Segment {
 }
 
 impl Segment {
+    #[trace]
     fn update_vector(
         &mut self,
         old_internal_id: PointOffsetType,
@@ -76,6 +80,7 @@ impl Segment {
         Ok(new_internal_index)
     }
 
+    #[trace]
     fn handle_version_and_failure<F>(
         &mut self,
         op_num: SeqNumberType,
@@ -131,6 +136,7 @@ impl Segment {
     /// Manage segment version checking
     /// If current version if higher than operation version - do not perform the operation
     /// Update current version if operation successfully executed
+    #[trace]
     fn handle_version<F>(
         &mut self,
         op_num: SeqNumberType,
@@ -171,6 +177,7 @@ impl Segment {
         res
     }
 
+    #[trace]
     fn lookup_internal_id(&self, point_id: PointIdType) -> OperationResult<PointOffsetType> {
         let internal_id_opt = self.id_tracker.borrow().internal_id(point_id);
         match internal_id_opt {
@@ -188,6 +195,7 @@ impl Segment {
         }
     }
 
+    #[trace]
     fn save_state(&self, state: &SegmentState) -> OperationResult<()> {
         let state_path = self.current_path.join(SEGMENT_STATE_FILE);
         let af = AtomicFile::new(state_path, AllowOverwrite);
@@ -246,6 +254,7 @@ impl SegmentEntry for Segment {
         self.id_tracker.borrow().version(point_id)
     }
 
+    #[trace]
     fn search(
         &self,
         vector: &[VectorElementType],
@@ -316,6 +325,7 @@ impl SegmentEntry for Segment {
         res
     }
 
+    #[trace]
     fn upsert_point(
         &mut self,
         op_num: SeqNumberType,
@@ -363,6 +373,7 @@ impl SegmentEntry for Segment {
         })
     }
 
+    #[trace]
     fn delete_point(
         &mut self,
         op_num: SeqNumberType,
@@ -382,6 +393,7 @@ impl SegmentEntry for Segment {
         })
     }
 
+    #[trace]
     fn set_full_payload(
         &mut self,
         op_num: SeqNumberType,
@@ -414,6 +426,7 @@ impl SegmentEntry for Segment {
         })
     }
 
+    #[trace]
     fn delete_payload(
         &mut self,
         op_num: SeqNumberType,
@@ -430,6 +443,7 @@ impl SegmentEntry for Segment {
         })
     }
 
+    #[trace]
     fn clear_payload(
         &mut self,
         op_num: SeqNumberType,
@@ -442,16 +456,19 @@ impl SegmentEntry for Segment {
         })
     }
 
+    #[trace]
     fn vector(&self, point_id: PointIdType) -> OperationResult<Vec<VectorElementType>> {
         let internal_id = self.lookup_internal_id(point_id)?;
         self.vector_by_offset(internal_id)
     }
 
+    #[trace]
     fn payload(&self, point_id: PointIdType) -> OperationResult<Payload> {
         let internal_id = self.lookup_internal_id(point_id)?;
         self.payload_by_offset(internal_id)
     }
 
+    #[trace]
     fn iter_points(&self) -> Box<dyn Iterator<Item = PointIdType> + '_> {
         // Sorry for that, but I didn't find any way easier.
         // If you try simply return iterator - it won't work because AtomicRef should exist
@@ -460,6 +477,7 @@ impl SegmentEntry for Segment {
         unsafe { self.id_tracker.as_ptr().as_ref().unwrap().iter_external() }
     }
 
+    #[trace]
     fn read_filtered<'a>(
         &'a self,
         offset: Option<PointIdType>,
@@ -504,6 +522,7 @@ impl SegmentEntry for Segment {
         self.segment_type
     }
 
+    #[trace]
     fn info(&self) -> SegmentInfo {
         let schema = self
             .payload_index
@@ -539,6 +558,7 @@ impl SegmentEntry for Segment {
         self.appendable_flag
     }
 
+    #[trace]
     fn flush(&self) -> OperationResult<SeqNumberType> {
         let mut persisted_version = self.persisted_version.lock().unwrap();
         if *persisted_version == self.version() {
@@ -557,6 +577,7 @@ impl SegmentEntry for Segment {
         Ok(state.version)
     }
 
+    #[trace]
     fn drop_data(&mut self) -> OperationResult<()> {
         let mut deleted_path = self.current_path.clone();
         deleted_path.set_extension("deleted");
@@ -570,6 +591,7 @@ impl SegmentEntry for Segment {
         })
     }
 
+    #[trace]
     fn delete_field_index(&mut self, op_num: u64, key: PayloadKeyTypeRef) -> OperationResult<bool> {
         self.handle_version_and_failure(op_num, None, |segment| {
             segment.payload_index.borrow_mut().drop_index(key)?;
@@ -577,6 +599,7 @@ impl SegmentEntry for Segment {
         })
     }
 
+    #[trace]
     fn create_field_index(
         &mut self,
         op_num: u64,

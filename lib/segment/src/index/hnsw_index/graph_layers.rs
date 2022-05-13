@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::common::file_operations::{atomic_save_bin, read_bin};
 use crate::common::utils::rev_range;
 use crate::entry::entry_point::OperationResult;
@@ -44,6 +47,7 @@ pub struct GraphLayers {
 ///
 /// Assume all scores are similarities. Larger score = closer points
 impl GraphLayers {
+    #[trace]
     pub fn new_with_params(
         num_vectors: usize, // Initial number of points in index
         m: usize,           // Expected M for non-first layer
@@ -76,6 +80,7 @@ impl GraphLayers {
         }
     }
 
+    #[trace]
     pub fn new(
         num_vectors: usize, // Initial number of points in index
         m: usize,           // Expected M for non-first layer
@@ -118,6 +123,7 @@ impl GraphLayers {
     }
 
     /// Generate random level for a new point, according to geometric distribution
+    #[trace]
     pub fn get_random_layer<R>(&self, rng: &mut R) -> usize
     where
         R: Rng + ?Sized,
@@ -128,6 +134,7 @@ impl GraphLayers {
         picked_level.round() as usize
     }
 
+    #[trace]
     fn set_levels(&mut self, point_id: PointOffsetType, level: usize) {
         if self.links_layers.len() <= point_id as usize {
             self.links_layers.resize(point_id as usize, vec![]);
@@ -142,6 +149,7 @@ impl GraphLayers {
     }
 
     /// Greedy search for closest points within a single graph layer
+    #[trace]
     fn _search_on_level(
         &self,
         searcher: &mut SearchContext,
@@ -172,6 +180,7 @@ impl GraphLayers {
         }
     }
 
+    #[trace]
     fn search_on_level(
         &self,
         level_entry: ScoredPointOffset,
@@ -201,6 +210,7 @@ impl GraphLayers {
 
     /// Greedy searches for entry point of level `target_level`.
     /// Beam size is 1.
+    #[trace]
     fn search_entry(
         &self,
         entry_point: PointOffsetType,
@@ -237,6 +247,7 @@ impl GraphLayers {
     }
 
     /// Connect new point to links, so that links contains only closest points
+    #[trace]
     fn connect_new_point<F>(
         links: &mut LinkContainer,
         new_point_id: PointOffsetType,
@@ -267,6 +278,7 @@ impl GraphLayers {
     }
 
     /// <https://github.com/nmslib/hnswlib/issues/99>
+    #[trace]
     fn select_candidate_with_heuristic_from_sorted<F>(
         candidates: impl Iterator<Item = ScoredPointOffset>,
         m: usize,
@@ -298,6 +310,7 @@ impl GraphLayers {
     }
 
     /// <https://github.com/nmslib/hnswlib/issues/99>
+    #[trace]
     fn select_candidates_with_heuristic<F>(
         candidates: FixedLengthPriorityQueue<ScoredPointOffset>,
         m: usize,
@@ -310,6 +323,7 @@ impl GraphLayers {
         Self::select_candidate_with_heuristic_from_sorted(closest_iter, m, score_internal)
     }
 
+    #[trace]
     pub fn link_new_point(
         &mut self,
         point_id: PointOffsetType,
@@ -431,6 +445,7 @@ impl GraphLayers {
         }
     }
 
+    #[trace]
     pub fn merge_from_other(&mut self, other: GraphLayers) {
         let mut visited_list = self.visited_pool.get(self.num_points());
         if other.links_layers.len() > self.links_layers.len() {
@@ -461,6 +476,7 @@ impl GraphLayers {
         self.visited_pool.return_back(visited_list);
     }
 
+    #[trace]
     pub fn search(
         &self,
         top: usize,

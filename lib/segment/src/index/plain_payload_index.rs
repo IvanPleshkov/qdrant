@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use crate::index::{PayloadIndex, PayloadIndexSS, VectorIndex};
 use crate::payload_storage::{ConditionCheckerSS, FilterContext};
 use crate::types::{
@@ -39,6 +42,7 @@ impl PlainPayloadIndex {
         self.config.save(&config_path)
     }
 
+    #[trace]
     pub fn open(
         condition_checker: Arc<ConditionCheckerSS>,
         points_iterator: Arc<AtomicRefCell<PointsIteratorSS>>,
@@ -68,10 +72,12 @@ impl PlainPayloadIndex {
 }
 
 impl PayloadIndex for PlainPayloadIndex {
+    #[trace]
     fn indexed_fields(&self) -> HashMap<PayloadKeyType, PayloadSchemaType> {
         self.config.indexed_fields.clone()
     }
 
+    #[trace]
     fn set_indexed(
         &mut self,
         field: PayloadKeyTypeRef,
@@ -89,11 +95,13 @@ impl PayloadIndex for PlainPayloadIndex {
         Ok(())
     }
 
+    #[trace]
     fn drop_index(&mut self, field: PayloadKeyTypeRef) -> OperationResult<()> {
         self.config.indexed_fields.remove(field);
         self.save_config()
     }
 
+    #[trace]
     fn estimate_cardinality(&self, _query: &Filter) -> CardinalityEstimation {
         let total_points = self.points_iterator.borrow().points_count();
         CardinalityEstimation {
@@ -104,6 +112,7 @@ impl PayloadIndex for PlainPayloadIndex {
         }
     }
 
+    #[trace]
     fn query_points<'a>(
         &'a self,
         query: &'a Filter,
@@ -119,6 +128,7 @@ impl PayloadIndex for PlainPayloadIndex {
         ))
     }
 
+    #[trace]
     fn filter_context<'a>(&'a self, filter: &'a Filter) -> Box<dyn FilterContext + 'a> {
         Box::new(PlainFilterContext {
             filter,
@@ -154,6 +164,7 @@ impl PlainIndex {
 }
 
 impl VectorIndex for PlainIndex {
+    #[trace]
     fn search(
         &self,
         vector: &[VectorElementType],

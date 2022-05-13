@@ -1,3 +1,6 @@
+extern crate profiler_proc_macro;
+use profiler_proc_macro::trace;
+
 use atomicwrites::AtomicFile;
 use atomicwrites::Error as AtomicIoError;
 use atomicwrites::OverwriteBehavior::AllowOverwrite;
@@ -50,6 +53,7 @@ impl From<IoError> for FileStorageError {
 
 pub type FileOperationResult<T> = result::Result<T, FileStorageError>;
 
+#[trace]
 pub fn atomic_save_bin<N: DeserializeOwned + Serialize>(
     path: &Path,
     object: &N,
@@ -62,6 +66,7 @@ pub fn atomic_save_bin<N: DeserializeOwned + Serialize>(
     Ok(())
 }
 
+#[trace]
 pub fn atomic_save_json<N: DeserializeOwned + Serialize>(
     path: &Path,
     object: &N,
@@ -72,6 +77,7 @@ pub fn atomic_save_json<N: DeserializeOwned + Serialize>(
     Ok(())
 }
 
+#[trace]
 pub fn read_json<N: DeserializeOwned + Serialize>(path: &Path) -> FileOperationResult<N> {
     let mut contents = String::new();
 
@@ -89,6 +95,7 @@ pub fn read_json<N: DeserializeOwned + Serialize>(path: &Path) -> FileOperationR
     Ok(result)
 }
 
+#[trace]
 pub fn read_bin<N: DeserializeOwned + Serialize>(path: &Path) -> FileOperationResult<N> {
     let mut file = File::open(path)?;
 
