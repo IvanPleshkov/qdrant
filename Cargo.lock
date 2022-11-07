@@ -250,7 +250,7 @@ dependencies = [
  "tonic",
  "tonic-build",
  "tower",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -953,11 +953,11 @@ dependencies = [
 
 [[package]]
 name = "debugid"
-version = "0.7.3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6ee87af31d84ef885378aebca32be3d682b0e0dc119d5b4860a2c5bb5046730"
+checksum = "bef552e6f588e446098f6ba40d89ac146c8c7b64aade83c051ee00bb5d2bc18d"
 dependencies = [
- "uuid",
+ "uuid 1.2.1",
 ]
 
 [[package]]
@@ -984,9 +984,9 @@ dependencies = [
 
 [[package]]
 name = "digest"
-version = "0.10.3"
+version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2fb860ca6fafa5552fb6d0e816a69c8e49f0908bf524e30a90d97c85892d506"
+checksum = "adfbc57365a37acbd2ebf2b64d7e69bb766e2fea813521ed536f5d0520dcf86c"
 dependencies = [
  "block-buffer 0.10.2",
  "crypto-common",
@@ -2292,9 +2292,9 @@ dependencies = [
 
 [[package]]
 name = "pprof"
-version = "0.9.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f9307de92566887d485ac6f20df17b0fe1704fffdbad0bdbc05a3864d3082f6"
+checksum = "e20150f965e0e4c925982b9356da71c84bcd56cb66ef4e894825837cbcf6613e"
 dependencies = [
  "backtrace",
  "cfg-if",
@@ -2305,9 +2305,10 @@ dependencies = [
  "nix",
  "once_cell",
  "parking_lot",
- "prost 0.10.1",
- "prost-build 0.10.1",
- "prost-derive 0.10.1",
+ "prost 0.11.2",
+ "prost-build 0.11.2",
+ "prost-derive 0.11.2",
+ "sha2",
  "smallvec",
  "symbolic-demangle",
  "tempfile",
@@ -2390,6 +2391,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0841812012b2d4a6145fae9a6af1534873c32aa67fff26bd09f8fa42c83f95a"
+dependencies = [
+ "bytes",
+ "prost-derive 0.11.2",
+]
+
+[[package]]
 name = "prost-build"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2430,6 +2441,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost-build"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d8b442418ea0822409d9e7d047cbf1e7e9e1760b172bf9982cf29d517c93511"
+dependencies = [
+ "bytes",
+ "heck 0.4.0",
+ "itertools 0.10.3",
+ "lazy_static",
+ "log 0.4.17",
+ "multimap",
+ "petgraph 0.6.0",
+ "prettyplease",
+ "prost 0.11.2",
+ "prost-types 0.11.2",
+ "regex",
+ "syn",
+ "tempfile",
+ "which",
+]
+
+[[package]]
 name = "prost-derive"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2456,6 +2489,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost-derive"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "164ae68b6587001ca506d3bf7f1000bfa248d0e1217b618108fba4ec1d0cc306"
+dependencies = [
+ "anyhow",
+ "itertools 0.10.3",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "prost-types"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2473,6 +2519,16 @@ checksum = "2d0a014229361011dc8e69c8a1ec6c2e8d0f2af7c91e3ea3f5b2170298461e68"
 dependencies = [
  "bytes",
  "prost 0.10.1",
+]
+
+[[package]]
+name = "prost-types"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "747761bc3dc48f9a34553bf65605cf6cb6288ba219f3450b4275dbd81539551a"
+dependencies = [
+ "bytes",
+ "prost 0.11.2",
 ]
 
 [[package]]
@@ -2954,7 +3010,7 @@ dependencies = [
  "schemars_derive",
  "serde",
  "serde_json",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -3012,7 +3068,7 @@ dependencies = [
  "serde_json",
  "tempdir",
  "thiserror",
- "uuid",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -3120,7 +3176,7 @@ checksum = "028f48d513f9678cda28f6e4064755b3fbb2af6acd672f2c209b62323f7aea0f"
 dependencies = [
  "cfg-if",
  "cpufeatures",
- "digest 0.10.3",
+ "digest 0.10.5",
 ]
 
 [[package]]
@@ -3137,6 +3193,17 @@ name = "sha1_smol"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ae1a47186c03a32177042e55dbc5fd5aee900b8e0069a8d70fba96a9375cd012"
+
+[[package]]
+name = "sha2"
+version = "0.10.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82e6b795fe2e3b1e845bafcb27aa35405c4d47cdfc92af5fc8d3002f76cebdc0"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest 0.10.5",
+]
 
 [[package]]
 name = "shlex"
@@ -3313,21 +3380,21 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "symbolic-common"
-version = "8.7.0"
+version = "10.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac6aac7b803adc9ee75344af7681969f76d4b38e4723c6eaacf3b28f5f1d87ff"
+checksum = "ac457d054f793cedfde6f32d21d692b8351cfec9084fefd0470c0373f6d799bc"
 dependencies = [
  "debugid",
  "memmap2",
  "stable_deref_trait",
- "uuid",
+ "uuid 1.2.1",
 ]
 
 [[package]]
 name = "symbolic-demangle"
-version = "8.7.0"
+version = "10.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8143ea5aa546f86c64f9b9aafdd14223ffad4ecd2d58575c63c21335909c99a7"
+checksum = "48808b846eef84e0ac06365dc620f028ae632355e5dcffc007bf1b2bf5eab17b"
 dependencies = [
  "cpp_demangle",
  "rustc-demangle",
@@ -3836,6 +3903,12 @@ dependencies = [
  "getrandom",
  "serde",
 ]
+
+[[package]]
+name = "uuid"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "feb41e78f93363bb2df8b0e86a2ca30eed7806ea16ea0c790d757cf93f79be83"
 
 [[package]]
 name = "vcpkg"
